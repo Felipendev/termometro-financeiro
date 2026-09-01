@@ -7,4 +7,5 @@ import br.com.felipe.termometro.lancamentoplanejado.application.repository.Lanca
  @Transactional public LancamentoPlanejado salva(LancamentoPlanejado item){return repository.save(new LancamentoPlanejadoJpaEntity(item)).paraDominio();}
  @Transactional public void remove(UUID id){repository.deleteById(id);}
  @Transactional(readOnly=true) public Optional<LancamentoPlanejado> buscaPorId(UUID id){return repository.findById(id).map(LancamentoPlanejadoJpaEntity::paraDominio);}
+ @Transactional(readOnly=true) public Optional<java.time.LocalDate> primeiraData(){return repository.findFirstByOrderByVencimentoAsc().map(LancamentoPlanejadoJpaEntity::getVencimento);}
 }

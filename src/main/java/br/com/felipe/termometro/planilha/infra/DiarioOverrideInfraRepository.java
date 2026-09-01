@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -33,5 +34,10 @@ public class DiarioOverrideInfraRepository implements DiarioOverrideRepository {
     @Override
     public void salvaEmSerie(LocalDate de, LocalDate ate, Dinheiro valor) {
         de.datesUntil(ate.plusDays(1)).forEach(dia -> salva(dia, valor));
+    }
+
+    @Override
+    public Optional<LocalDate> primeiraData() {
+        return jpaRepository.findFirstByOrderByDataAsc().map(DiarioOverrideJpaEntity::getData);
     }
 }

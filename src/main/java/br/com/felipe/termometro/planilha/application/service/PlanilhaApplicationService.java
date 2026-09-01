@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,8 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Composição pura (sem repositório de agregação próprio): reaproveita
  * {@link LancamentoPlanejadoRepository} e {@link LancamentoImportadoRepository} — as mesmas
  * portas que já fundem banco e manual para o {@code ConsultaLancamentosService} — só que
- * agrupando por dia em vez de por página, e cascateando o saldo mês após mês a partir da
- * âncora que o Felipe declarou (RN-24.1).
+ * agrupando por dia em vez de por página, e cascateando o saldo mês após mês. A âncora manual
+ * é opcional: sem ela, o replay começa no primeiro mês que possui movimento.
  */
 @Service
 @RequiredArgsConstructor
@@ -49,16 +50,16 @@ public class PlanilhaApplicationService implements PlanilhaService {
 
     @Override
     public PlanilhaDoMes consultaComItensExtras(Competencia competencia, Map<LocalDate, List<ItemDoDia>> itensExtras) {
-        SaldoInicialPlanilha saldoInicial = saldoInicialRepository.busca()
-                .orElseThrow(() -> APIException.build(HttpStatus.BAD_REQUEST,
-                        "Defina o saldo inicial da planilha para que os meses sejam calculados em cascata."));
-        LocalDate inicioDoReplay = saldoInicial.dataReferencia().plusDays(1);
-
-        if (inicioDoReplay.isAfter(competencia.primeiroDia())) {
-            throw APIException.build(HttpStatus.BAD_REQUEST,
-                    "O saldo inicial está definido para depois do início do mês pedido — "
-                            + "ajuste a data de referência ou peça um mês posterior a ela.");
-        }
+        Optional<SaldoInicialPlanilha> saldoCadastrado = saldoInicialRepository.busca();
+        boolean usaSaldoCadastrado = saldoCadastrado
+                .map(saldo -> saldo.dataReferencia().isBefore(competencia.primeiroDia()))
+                .orElse(false);
+        LocalDate inicioDoReplay = usaSaldoCadastrado
+                ? saldoCadastrado.orElseThrow().dataReferencia().plusDays(1)
+                : primeiraDataFinanceira(itensExtras)
+                        .filter(data -> !data.isAfter(competencia.ultimoDia()))
+                        .map(data -> Competencia.de(data).primeiroDia())
+                        .orElse(competencia.primeiroDia());
 
         List<Competencia> competenciasDeApoio = Competencia.de(inicioDoReplay).ate(competencia).toList();
 
@@ -79,7 +80,8 @@ public class PlanilhaApplicationService implements PlanilhaService {
                 diarioOverrideRepository.buscaEntre(inicioDoReplay, competencia.ultimoDia());
         Map<LocalDate, String> observacoes =
                 observacaoDoDiaRepository.buscaEntre(inicioDoReplay, competencia.ultimoDia());
-        Dinheiro valorInicial = saldoInicial.valor();
+        Dinheiro valorInicial = usaSaldoCadastrado
+                ? saldoCadastrado.orElseThrow().valor() : Dinheiro.ZERO;
 
         List<DiaDaPlanilha> todosOsDias = CalculadoraDeSaldoEmCascata.calcula(
                 diasParaCalcular, lancamentosPorDia, diarios, observacoes, valorInicial);
@@ -89,6 +91,16 @@ public class PlanilhaApplicationService implements PlanilhaService {
                 .toList();
 
         return PlanilhaDoMes.de(competencia, diasDoMesPedido);
+    }
+
+    private Optional<LocalDate> primeiraDataFinanceira(Map<LocalDate, List<ItemDoDia>> itensExtras) {
+        return java.util.stream.Stream.of(
+                        lancamentoPlanejadoRepository.primeiraData(),
+                        lancamentoImportadoRepository.primeiraData(),
+                        diarioOverrideRepository.primeiraData(),
+                        itensExtras.keySet().stream().min(LocalDate::compareTo))
+                .flatMap(Optional::stream)
+                .min(LocalDate::compareTo);
     }
 
     @Override

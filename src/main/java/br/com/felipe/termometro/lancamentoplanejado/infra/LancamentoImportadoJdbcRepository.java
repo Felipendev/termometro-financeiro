@@ -4,6 +4,7 @@ import br.com.felipe.termometro.lancamentoplanejado.application.repository.Lanca
 import br.com.felipe.termometro.shared.Competencia;
 import br.com.felipe.termometro.shared.Dinheiro;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,5 +40,16 @@ public class LancamentoImportadoJdbcRepository implements LancamentoImportadoRep
                         resultado.getString("natureza"),
                         resultado.getString("origem")),
                 competencia.primeiroDia(), competencia.ultimoDia());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<java.time.LocalDate> primeiraData() {
+        return Optional.ofNullable(jdbcTemplate.queryForObject("""
+                select min(data)
+                from transacao
+                where ignorada = false
+                  and origem <> 'MANUAL'
+                """, java.time.LocalDate.class));
     }
 }

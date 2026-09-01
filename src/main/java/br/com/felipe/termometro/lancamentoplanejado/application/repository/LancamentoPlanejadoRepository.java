@@ -4,6 +4,7 @@ import br.com.felipe.termometro.lancamentoplanejado.domain.LancamentoPlanejado;
 import br.com.felipe.termometro.shared.Competencia;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public interface LancamentoPlanejadoRepository {
@@ -12,4 +13,8 @@ public interface LancamentoPlanejadoRepository {
     LancamentoPlanejado salva(LancamentoPlanejado item);
     void remove(UUID id);
     Optional<LancamentoPlanejado> buscaPorId(UUID id);
+
+    default Optional<LocalDate> primeiraData() {
+        return Optional.empty();
+    }
 }

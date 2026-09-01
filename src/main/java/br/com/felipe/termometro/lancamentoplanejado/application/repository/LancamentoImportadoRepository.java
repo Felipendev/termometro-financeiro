@@ -5,11 +5,16 @@ import br.com.felipe.termometro.shared.Dinheiro;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 @FunctionalInterface
 public interface LancamentoImportadoRepository {
     List<LancamentoImportado> buscaPorCompetencia(Competencia competencia);
+
+    default Optional<LocalDate> primeiraData() {
+        return Optional.empty();
+    }
 
     record LancamentoImportado(
             UUID id,

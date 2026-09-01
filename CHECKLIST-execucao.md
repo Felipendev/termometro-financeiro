@@ -282,3 +282,9 @@ faturas sem duplicar consumo no Comparativo.
 - [x] Saldo positivo ou negativo é carregado continuamente para o mês seguinte, sem zerar a cascata
 - [x] Testes novos de regressão + `npm run build` + `mvn clean test` no último passo
 - [x] Commit e push da nova versão no repositório pessoal `Felipendev`
+
+### Correção pós-Fase 13 ✅
+
+- [x] Planilha abre e calcula usando as entradas e saídas existentes, sem exigir saldo manual
+- [x] Saldo manual é uma conciliação opcional e não bloqueia o próprio mês nem meses anteriores
+- [x] Cascata automática validada sem âncora e com âncora dentro do mês consultado
