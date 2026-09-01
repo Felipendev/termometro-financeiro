@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import br.com.felipe.termometro.ingestao.application.api.response.ResumoCartoesResponse;
+import br.com.felipe.termometro.cartao.application.repository.CartaoRepository;
+import br.com.felipe.termometro.cartao.domain.Cartao;
 import br.com.felipe.termometro.ingestao.application.repository.ContaRepository;
 import br.com.felipe.termometro.ingestao.application.repository.TransacaoRepository;
 import br.com.felipe.termometro.ingestao.domain.ContaBancaria;
@@ -13,6 +15,7 @@ import br.com.felipe.termometro.shared.Dinheiro;
 import br.com.felipe.termometro.shared.Percentual;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +33,9 @@ class CartaoApplicationServiceTest {
 
     @Mock
     private TransacaoRepository transacaoRepository;
+
+    @Mock
+    private CartaoRepository cartaoRepository;
 
     @Test
     @DisplayName("compõe cada cartão com o gasto real da competência e o percentual do limite usado")
@@ -104,6 +110,25 @@ class CartaoApplicationServiceTest {
         ResumoCartoesResponse resumo = servico().consultaCartoes(SETEMBRO);
 
         assertThat(resumo.totalGastoEmCartoes()).isEqualTo(Dinheiro.de("8231.24"));
+    }
+
+    @Test
+    @DisplayName("importação vinculada ao UUID manual alimenta cartões e substitui o duplicado bancário")
+    void incluiImportacaoFeitaPeloCartaoManual() {
+        UUID id = UUID.randomUUID();
+        when(contaRepository.buscaCartoes()).thenReturn(List.of(cartao("nubank", "Nubank", "3000.00")));
+        when(cartaoRepository.buscaAtivos()).thenReturn(List.of(
+                new Cartao(id, "Nubank", Dinheiro.de("5000"), Dinheiro.ZERO, null, true)));
+        when(transacaoRepository.somaGastoDeCartaoPorConta(SETEMBRO))
+                .thenReturn(Map.of(id.toString(), Dinheiro.de("450.00")));
+
+        ResumoCartoesResponse resumo = new CartaoApplicationService(
+                contaRepository, transacaoRepository, cartaoRepository).consultaCartoes(SETEMBRO);
+
+        assertThat(resumo.cartoes()).singleElement().satisfies(cartao -> {
+            assertThat(cartao.identificador()).isEqualTo(id.toString());
+            assertThat(cartao.gastoNoMes()).isEqualTo(Dinheiro.de("450"));
+        });
     }
 
     private CartaoApplicationService servico() {

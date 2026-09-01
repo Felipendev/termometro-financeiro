@@ -78,7 +78,7 @@ function FormularioCartao({ inicial, onSalvar, onCancelar }: FormularioProps) {
       <input
         type="text"
         inputMode="decimal"
-        placeholder="Valor da fatura"
+        placeholder="Fatura atual (referência)"
         value={valorFatura}
         onChange={(e) => setValorFatura(e.target.value)}
       />
@@ -104,7 +104,8 @@ function FormularioCartao({ inicial, onSalvar, onCancelar }: FormularioProps) {
 }
 
 /**
- * Cadastro manual de cartão. O valor da fatura é atualizado quando ela fecha.
+ * Cadastro manual de cartão. O valor digitado é apenas a referência da competência atual;
+ * o histórico mensal é mantido na seção de faturas.
  *
  * Sem competência: é o valor atual do cartão, editado quando a fatura fechar — mesmo espírito de
  * "Dívidas Rotativas" (saldo devedor que se atualiza, não uma série mensal).
@@ -155,7 +156,7 @@ export function CartoesSection() {
     <section className="cartao">
       <h3>Cartões {totalFaturas !== null && <span className="cartao__total-titulo">{formatarDinheiro(totalFaturas)}</span>}</h3>
       <p className="cartao__legenda">
-        Atualize o valor da fatura sempre que ela fechar.
+        Este cadastro identifica o cartão. Em Cartões, cada mês pode ter um valor próprio e os imports têm prioridade.
       </p>
 
       {erro && <p className="form__erro">{erro}</p>}

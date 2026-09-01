@@ -22,7 +22,13 @@ public record LancamentoDaPlanilhaRequest(
         String categoria,
         String grupoCategoria,
         String naturezaCategoria,
-        String origemReceita) {
+        String origemReceita,
+        String marcacaoPlanejamento) {
+
+    public LancamentoDaPlanilhaRequest(String descricao, String tipo, BigDecimal valor,
+            String categoria, String grupoCategoria, String naturezaCategoria, String origemReceita) {
+        this(descricao, tipo, valor, categoria, grupoCategoria, naturezaCategoria, origemReceita, null);
+    }
 
     public LancamentoPlanejado paraDominio(UUID id, LocalDate data) {
         TipoLancamentoPlanejado tipoDominio = switch (tipo) {
@@ -33,8 +39,13 @@ public record LancamentoDaPlanilhaRequest(
         return new LancamentoPlanejado(
                 id, descricao.trim(), tipoDominio, Dinheiro.de(valor), data,
                 StatusLancamentoPlanejado.PENDENTE, null, null,
-                categoria(tipoDominio), null, null, MarcacaoPlanejamento.NENHUMA,
+                categoria(tipoDominio), null, null, marcacao(tipoDominio),
                 origemReceita(tipoDominio));
+    }
+
+    private MarcacaoPlanejamento marcacao(TipoLancamentoPlanejado tipoDominio) {
+        return marcacaoPlanejamento == null || marcacaoPlanejamento.isBlank()
+                ? MarcacaoPlanejamento.NENHUMA : MarcacaoPlanejamento.valueOf(marcacaoPlanejamento);
     }
 
     private CategoriaDoLancamento categoria(TipoLancamentoPlanejado tipoDominio) {

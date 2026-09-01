@@ -14,7 +14,7 @@ import java.util.Map;
  * poucas dezenas de itens revisado por uma pessoa só; se isso incomodar na prática, o próximo passo
  * natural é migrar para um campo {@code grupo} de verdade no catálogo.
  */
-final class MapeadorDeGrupo {
+public final class MapeadorDeGrupo {
 
     private static final Map<String, GrupoDoComparativo> GRUPO_POR_NOME = Map.ofEntries(
             Map.entry("Aluguel", GrupoDoComparativo.MORADIA),
@@ -39,7 +39,18 @@ final class MapeadorDeGrupo {
     private MapeadorDeGrupo() {
     }
 
-    static GrupoDoComparativo grupoDe(String nomeDoItem) {
+    public static GrupoDoComparativo grupoDe(String nomeDoItem) {
         return GRUPO_POR_NOME.getOrDefault(nomeDoItem, GrupoDoComparativo.OUTROS);
+    }
+
+    public static GrupoDoComparativo grupoDe(String grupoDaCategoria, String nomeDaCategoria) {
+        if (grupoDaCategoria != null) {
+            try {
+                return GrupoDoComparativo.valueOf(grupoDaCategoria);
+            } catch (IllegalArgumentException ignorada) {
+                // Grupos ainda não calibrados (compras, dívida, vestuário...) aparecem em Outros.
+            }
+        }
+        return grupoDe(nomeDaCategoria);
     }
 }

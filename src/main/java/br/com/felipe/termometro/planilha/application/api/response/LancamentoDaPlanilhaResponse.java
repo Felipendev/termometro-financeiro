@@ -13,13 +13,15 @@ public record LancamentoDaPlanilhaResponse(
         String categoria,
         String grupoCategoria,
         String naturezaCategoria,
-        String origemReceita) {
+        String origemReceita,
+        String marcacaoPlanejamento) {
 
     public static LancamentoDaPlanilhaResponse de(ItemDoDia item) {
         return new LancamentoDaPlanilhaResponse(
                 item.id() == null ? null : item.id().toString(), item.descricao(),
                 item.valor().paraJson(), item.tipo().name(), item.origem(),
                 item.usoDeCredito() == null ? null : item.usoDeCredito().name(), item.editavel(),
-                item.categoria(), item.grupoCategoria(), item.naturezaCategoria(), item.origemReceita());
+                item.categoria(), item.grupoCategoria(), item.naturezaCategoria(), item.origemReceita(),
+                item.marcacaoPlanejamento());
     }
 }

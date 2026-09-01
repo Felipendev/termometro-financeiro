@@ -114,9 +114,8 @@ export interface ResumoCartoesResponse {
 }
 
 /**
- * Cartão cadastrado à mão (módulo `cartao`, backend) — nome + limite opcional + valor da fatura
- * digitado por Felipe, estado atual sem histórico por competência (mesmo espírito de
- * DividaRotativa.saldoDevedor).
+ * Cartão cadastrado à mão. `valorFatura` é somente a referência inicial do mês atual; o histórico
+ * por competência e os pagamentos são expostos por `FaturaCartaoResponse`.
  */
 export interface CartaoManualResponse {
   id: string;
@@ -124,6 +123,18 @@ export interface CartaoManualResponse {
   limite: DinheiroStr | null;
   valorFatura: DinheiroStr;
   observacao: string | null;
+}
+
+export interface FaturaCartaoResponse {
+  referencia: string;
+  nome: string;
+  limite: DinheiroStr | null;
+  valorTotal: DinheiroStr;
+  valorPago: DinheiroStr;
+  saldoAberto: DinheiroStr;
+  status: "SEM_MOVIMENTO" | "ABERTA" | "PARCIAL" | "PAGA";
+  origem: "IMPORTACAO" | "DECLARADA";
+  pagamentos: { id: string; valor: DinheiroStr; data: string; lancamentoId: string }[];
 }
 
 export interface EuDoPresenteResponse {
@@ -223,7 +234,7 @@ export interface DashboardResponse {
 
 export interface ContaManualResponse { id: string; identificador: string; nome: string; tipo: string; saldo: DinheiroStr; }
 export interface CategoriaDoLancamentoResponse { nome: string; grupo: string; natureza: string; }
-export type MarcacaoPlanejamento = "NENHUMA" | "CUSTO_FIXO" | "PISO_HUMANO";
+export type MarcacaoPlanejamento = "NENHUMA" | "CUSTO_FIXO" | "PISO_HUMANO" | "RECEITA_RECORRENTE";
 export type OrigemReceita = "SALARIO" | "INVESTIMENTO" | "EMPRESTIMO";
 export interface LancamentoPlanejadoResponse { id: string; descricao: string; tipo: "DESPESA" | "RECEITA" | "TRANSFERENCIA"; valor: DinheiroStr; vencimento: string; status: string; contaOrigemId: string | null; contaDestinoId: string | null; categoria: CategoriaDoLancamentoResponse | null; cartaoManualId: string | null; transacaoId: string | null; marcacaoPlanejamento: MarcacaoPlanejamento; contaOuCartao: string | null; editavel: boolean; origem: string; origemReceita: OrigemReceita | null; }
 export interface LancamentoPlanejadoRequest { descricao: string; tipo: "DESPESA" | "RECEITA" | "TRANSFERENCIA"; valor: number; vencimento: string; contaOrigemId?: string | null; contaDestinoId?: string | null; categoria?: string | null; grupoCategoria?: string | null; naturezaCategoria?: string | null; cartaoManualId?: string | null; marcacaoPlanejamento?: MarcacaoPlanejamento; origemReceita?: OrigemReceita | null; }
@@ -252,6 +263,7 @@ export interface LancamentoDaPlanilhaResponse {
   grupoCategoria: string | null;
   naturezaCategoria: string | null;
   origemReceita: OrigemReceita | null;
+  marcacaoPlanejamento: MarcacaoPlanejamento | null;
 }
 export interface LancamentoDaPlanilhaRequest {
   descricao: string;
@@ -261,6 +273,7 @@ export interface LancamentoDaPlanilhaRequest {
   grupoCategoria?: string | null;
   naturezaCategoria?: string | null;
   origemReceita?: OrigemReceita | null;
+  marcacaoPlanejamento?: MarcacaoPlanejamento | null;
 }
 export interface DiaDaPlanilhaResponse { data: string; entrada: DinheiroStr; saida: DinheiroStr; diario: DinheiroStr; diarioSobrescrito: boolean; saldo: DinheiroStr; faixaSaldo: string; lancamentos: LancamentoDaPlanilhaResponse[]; observacao: string | null; }
 export interface PlanilhaMesResponse { competencia: string; dias: DiaDaPlanilhaResponse[]; totalEntrada: DinheiroStr; totalSaida: DinheiroStr; totalDiario: DinheiroStr; saldoFinal: DinheiroStr; totalDeficitDisfarcado: DinheiroStr; transacoesEmAtencao: number; }
@@ -282,6 +295,10 @@ export interface PontoComparativoResponse {
   bom: PercentualStr | null;
   ideal: PercentualStr | null;
   ruim: PercentualStr | null;
+  valorAtual: DinheiroStr;
+  rendaReferencia: DinheiroStr;
+  fonte: "LANCAMENTOS_DO_MES" | "CATALOGO";
+  itens: { descricao: string; categoria: string; valor: DinheiroStr; origem: string }[];
 }
 
 export interface ProximoPassoContribuicaoResponse { competencia: string; percentualProposto: PercentualStr; valorProposto: DinheiroStr; }

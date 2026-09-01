@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -50,10 +49,10 @@ public class PlanilhaApplicationService implements PlanilhaService {
 
     @Override
     public PlanilhaDoMes consultaComItensExtras(Competencia competencia, Map<LocalDate, List<ItemDoDia>> itensExtras) {
-        Optional<SaldoInicialPlanilha> saldoInicial = saldoInicialRepository.busca();
-        LocalDate inicioDoReplay = saldoInicial
-                .map(referencia -> referencia.dataReferencia().plusDays(1))
-                .orElse(competencia.primeiroDia());
+        SaldoInicialPlanilha saldoInicial = saldoInicialRepository.busca()
+                .orElseThrow(() -> APIException.build(HttpStatus.BAD_REQUEST,
+                        "Defina o saldo inicial da planilha para que os meses sejam calculados em cascata."));
+        LocalDate inicioDoReplay = saldoInicial.dataReferencia().plusDays(1);
 
         if (inicioDoReplay.isAfter(competencia.primeiroDia())) {
             throw APIException.build(HttpStatus.BAD_REQUEST,
@@ -72,6 +71,7 @@ public class PlanilhaApplicationService implements PlanilhaService {
 
         List<LocalDate> diasParaCalcular = competenciasDeApoio.stream()
                 .flatMap(comp -> comp.primeiroDia().datesUntil(comp.ultimoDia().plusDays(1)))
+                .filter(data -> !data.isBefore(inicioDoReplay))
                 .sorted()
                 .toList();
 
@@ -79,7 +79,7 @@ public class PlanilhaApplicationService implements PlanilhaService {
                 diarioOverrideRepository.buscaEntre(inicioDoReplay, competencia.ultimoDia());
         Map<LocalDate, String> observacoes =
                 observacaoDoDiaRepository.buscaEntre(inicioDoReplay, competencia.ultimoDia());
-        Dinheiro valorInicial = saldoInicial.map(SaldoInicialPlanilha::valor).orElse(Dinheiro.ZERO);
+        Dinheiro valorInicial = saldoInicial.valor();
 
         List<DiaDaPlanilha> todosOsDias = CalculadoraDeSaldoEmCascata.calcula(
                 diasParaCalcular, lancamentosPorDia, diarios, observacoes, valorInicial);
@@ -137,7 +137,8 @@ public class PlanilhaApplicationService implements PlanilhaService {
                             categoria == null ? null : categoria.nome(),
                             categoria == null ? null : categoria.grupo(),
                             categoria == null ? null : categoria.natureza(),
-                            item.origemReceita() == null ? null : item.origemReceita().name()));
+                            item.origemReceita() == null ? null : item.origemReceita().name(),
+                            item.marcacaoPlanejamento().name()));
         }
     }
 
@@ -183,7 +184,7 @@ public class PlanilhaApplicationService implements PlanilhaService {
                 alteracoes.vencimento(), StatusLancamentoPlanejado.PENDENTE,
                 existente.contaOrigemId(), existente.contaDestinoId(), alteracoes.categoria(),
                 existente.cartaoManualId(), existente.transacaoId(),
-                existente.marcacaoPlanejamento(), alteracoes.origemReceita());
+                alteracoes.marcacaoPlanejamento(), alteracoes.origemReceita());
         LancamentoPlanejado salvo = lancamentoPlanejadoService.edita(atualizado);
         return estavaLiquidado ? lancamentoPlanejadoService.liquidar(salvo.id()) : salvo;
     }

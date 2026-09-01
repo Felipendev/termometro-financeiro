@@ -65,9 +65,18 @@ public record LancamentoPlanejado(
         if (!valor.ehPositivo()) {
             throw new IllegalArgumentException("valor deve ser positivo");
         }
-        if (tipo != TipoLancamentoPlanejado.DESPESA
-                && marcacaoPlanejamento != MarcacaoPlanejamento.NENHUMA) {
+        if (tipo == TipoLancamentoPlanejado.DESPESA
+                && marcacaoPlanejamento == MarcacaoPlanejamento.RECEITA_RECORRENTE) {
+            throw new IllegalArgumentException("receita recorrente só pode marcar receitas");
+        }
+        if (tipo == TipoLancamentoPlanejado.RECEITA
+                && marcacaoPlanejamento != MarcacaoPlanejamento.NENHUMA
+                && marcacaoPlanejamento != MarcacaoPlanejamento.RECEITA_RECORRENTE) {
             throw new IllegalArgumentException("custo fixo e piso humano só podem marcar despesas");
+        }
+        if (tipo == TipoLancamentoPlanejado.TRANSFERENCIA
+                && marcacaoPlanejamento != MarcacaoPlanejamento.NENHUMA) {
+            throw new IllegalArgumentException("transferência não possui marcação de recorrência");
         }
         if (tipo != TipoLancamentoPlanejado.RECEITA && origemReceita != null) {
             throw new IllegalArgumentException("origem da receita só pode ser usada em receitas");

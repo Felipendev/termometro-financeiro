@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.com.felipe.termometro.lancamentoplanejado.domain.OrigemReceita;
+import br.com.felipe.termometro.lancamentoplanejado.domain.MarcacaoPlanejamento;
 import br.com.felipe.termometro.lancamentoplanejado.domain.TipoLancamentoPlanejado;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,5 +35,27 @@ class LancamentoDaPlanilhaRequestTest {
         assertThatThrownBy(() -> request.paraDominio(UUID.randomUUID(), LocalDate.now()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("não possui categoria");
+    }
+
+    @Test
+    void saidaPodeSerMarcadaComoRecorrenteDiretoNaPlanilha() {
+        var request = new LancamentoDaPlanilhaRequest(
+                "Aluguel", "SAIDA", new BigDecimal("1800"),
+                "Aluguel", "MORADIA", "FIXO", null, "CUSTO_FIXO");
+
+        var item = request.paraDominio(UUID.randomUUID(), LocalDate.of(2026, 9, 10));
+
+        assertThat(item.marcacaoPlanejamento()).isEqualTo(MarcacaoPlanejamento.CUSTO_FIXO);
+    }
+
+    @Test
+    void entradaPodeSerMarcadaComoReceitaRecorrenteDiretoNaPlanilha() {
+        var request = new LancamentoDaPlanilhaRequest(
+                "Salário", "ENTRADA", new BigDecimal("5000"),
+                null, null, null, "SALARIO", "RECEITA_RECORRENTE");
+
+        var item = request.paraDominio(UUID.randomUUID(), LocalDate.of(2026, 9, 5));
+
+        assertThat(item.marcacaoPlanejamento()).isEqualTo(MarcacaoPlanejamento.RECEITA_RECORRENTE);
     }
 }

@@ -260,3 +260,25 @@ novas — hoje cada tela tem um padrão diferente, isso não pode se propagar pr
 - [x] Aplicar o padrão visual da Fase 1 em tudo que for reconectado aqui — é a última chance de sobrar
       tela fora do padrão
 - [x] Critério de pronto: nenhuma informação da Visão Geral antiga foi perdida, só reorganizada
+
+---
+
+## Fase 13 — Valores reais, faturas e rastreabilidade mensal ✅ concluída
+
+**Objetivo:** substituir números opacos por lançamentos reais do mês e permitir acompanhar e pagar
+faturas sem duplicar consumo no Comparativo.
+
+- [x] “Mês atual” usa receitas menos despesas da competência, separado da cascata da Planilha
+- [x] Custo fixo e Piso humano são clicáveis e abrem os lançamentos que formam cada total
+- [x] Comparativo prioriza lançamentos manuais/importados, mantém catálogo apenas como fallback e
+      detalha os itens de cada grupo
+- [x] Categorias do relatório são clicáveis e exibem os valores específicos incluídos
+- [x] Faturas têm histórico por competência, detalhe, estado aberta/parcial/paga e pagamento parcial
+- [x] Pagamento de fatura gera saída na Planilha e é `NAO_E_GASTO` para não inflar o Comparativo
+- [x] Cartões importados refletem os imports; valores manuais podem ser ajustados por competência
+- [x] Logotipos de bancos/cartões exportados do arquivo Figma e armazenados localmente, com fallback
+- [x] Inclusão/edição direta na Planilha permite marcar despesa comum, recorrente ou Piso humano
+- [x] Receita manual pode ser marcada como recorrente tanto no lançamento rápido quanto na Planilha
+- [x] Saldo positivo ou negativo é carregado continuamente para o mês seguinte, sem zerar a cascata
+- [x] Testes novos de regressão + `npm run build` + `mvn clean test` no último passo
+- [x] Commit e push da nova versão no repositório pessoal `Felipendev`

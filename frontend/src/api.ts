@@ -31,7 +31,7 @@ export class ApiError extends Error {
   }
 }
 
-const CONTRATO_API = "2026-09-01-planilha-editavel-v1";
+const CONTRATO_API = "2026-09-01-faturas-saldo-recorrencia-v2";
 
 export async function verificaCompatibilidade(signal?: AbortSignal): Promise<void> {
   let resposta: { contratoApi: string };
@@ -180,6 +180,34 @@ export function buscaComparativoCategorias(competencia: string): Promise<PontoCo
   return apiFetch<PontoComparativoResponse[]>(`/v1/visao-geral/comparativo-categorias?competencia=${encodeURIComponent(competencia)}`);
 }
 
+export function buscaFaturasCartao(competencia: string): Promise<import("./types").FaturaCartaoResponse[]> {
+  return apiFetch<import("./types").FaturaCartaoResponse[]>(`/v1/faturas-cartao?competencia=${encodeURIComponent(competencia)}`);
+}
+
+export function pagaFaturaCartao(competencia: string, request: {
+  referencia: string;
+  valor: string;
+  dataPagamento: string;
+  contaOrigemId: string | null;
+}): Promise<import("./types").FaturaCartaoResponse> {
+  return apiFetch<import("./types").FaturaCartaoResponse>(`/v1/faturas-cartao/pagamentos?competencia=${encodeURIComponent(competencia)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+}
+
+export function declaraValorFaturaCartao(competencia: string, request: {
+  referencia: string;
+  valor: string;
+}): Promise<import("./types").FaturaCartaoResponse> {
+  return apiFetch<import("./types").FaturaCartaoResponse>(`/v1/faturas-cartao/valor-declarado?competencia=${encodeURIComponent(competencia)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+}
+
 export function buscaRollupAnual(ano: number): Promise<MesDoRollupResponse[]> {
   return apiFetch<MesDoRollupResponse[]>(`/v1/relatorios/rollup-anual?ano=${ano}`);
 }
@@ -265,6 +293,18 @@ export function buscaLancamentos(competencia: string, filtros: {
   if (filtros.categoria) p.set("categoria", filtros.categoria);
   if (filtros.q) p.set("q", filtros.q);
   return apiFetch<ConsultaLancamentosResponse>(`/v1/lancamentos?${p}`);
+}
+export async function buscaTodosLancamentos(competencia: string): Promise<LancamentoPlanejadoResponse[]> {
+  const itens: LancamentoPlanejadoResponse[] = [];
+  let pagina = 0;
+  let temMais: boolean;
+  do {
+    const resposta = await buscaLancamentos(competencia, { pagina, tamanho: 100 });
+    itens.push(...resposta.itens);
+    temMais = resposta.temMais;
+    pagina += 1;
+  } while (temMais);
+  return itens;
 }
 export function postComandoLancamento(id: string, comando: "liquidar" | "reabrir" | "cancelar"): Promise<LancamentoPlanejadoResponse> { return apiFetch(`/v1/lancamentos-planejados/${id}/${comando}`, { method: "POST" }); }
 export function deleteLancamentoPlanejado(id: string): Promise<void> { return apiFetch<void>(`/v1/lancamentos-planejados/${id}`, { method: "DELETE" }); }

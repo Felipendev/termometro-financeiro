@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { postLancamentoNaPlanilha, putLancamentoNaPlanilha } from "../api";
 import { CATEGORIAS_LANCAMENTO } from "../categorias";
 import { normalizarDecimal } from "../format";
-import type { LancamentoDaPlanilhaRequest, LancamentoDaPlanilhaResponse, OrigemReceita } from "../types";
+import type { LancamentoDaPlanilhaRequest, LancamentoDaPlanilhaResponse, MarcacaoPlanejamento, OrigemReceita } from "../types";
 
 const ORIGENS: { valor: OrigemReceita; rotulo: string }[] = [
   { valor: "SALARIO", rotulo: "Salário" },
@@ -26,6 +26,7 @@ export function EditorLancamentoPlanilha({
   const [valor, setValor] = useState(item?.valor.replace(".", ",") ?? "");
   const [categoria, setCategoria] = useState(item?.categoria ?? "");
   const [origemReceita, setOrigemReceita] = useState<OrigemReceita | "">(item?.origemReceita ?? "");
+  const [marcacao, setMarcacao] = useState<MarcacaoPlanejamento>(item?.marcacaoPlanejamento ?? "NENHUMA");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -53,6 +54,7 @@ export function EditorLancamentoPlanilha({
       grupoCategoria: tipo === "SAIDA" ? categoriaEscolhida?.grupo : null,
       naturezaCategoria: tipo === "SAIDA" ? (item?.naturezaCategoria ?? "VARIAVEL") : null,
       origemReceita: tipo === "ENTRADA" ? origemReceita || null : null,
+      marcacaoPlanejamento: marcacao,
     };
     setSalvando(true);
     setErro(null);
@@ -71,7 +73,7 @@ export function EditorLancamentoPlanilha({
     <form className="form planilha__editor" onSubmit={salvar}>
       <div className="form__campo">
         <label htmlFor="planilha-tipo">Movimento</label>
-        <select id="planilha-tipo" value={tipo} disabled={Boolean(item)} onChange={(evento) => setTipo(evento.target.value as "ENTRADA" | "SAIDA")}>
+        <select id="planilha-tipo" value={tipo} disabled={Boolean(item)} onChange={(evento) => { const novoTipo = evento.target.value as "ENTRADA" | "SAIDA"; setTipo(novoTipo); setMarcacao("NENHUMA"); }}>
           <option value="SAIDA">Saída</option>
           <option value="ENTRADA">Entrada</option>
         </select>
@@ -85,21 +87,21 @@ export function EditorLancamentoPlanilha({
         <input id="planilha-valor" inputMode="decimal" placeholder="0,00" value={valor} onChange={(evento) => setValor(evento.target.value)} required />
       </div>
       {tipo === "SAIDA" ? (
-        <div className="form__campo">
+        <><div className="form__campo">
           <label htmlFor="planilha-categoria">Categoria da saída</label>
           <select id="planilha-categoria" value={categoria} onChange={(evento) => setCategoria(evento.target.value)} required>
             <option value="">Escolha uma categoria</option>
             {CATEGORIAS_LANCAMENTO.map((opcao) => <option key={opcao.nome} value={opcao.nome}>{opcao.nome}</option>)}
           </select>
-        </div>
+        </div><div className="form__campo"><label htmlFor="planilha-recorrencia">Planejamento</label><select id="planilha-recorrencia" value={marcacao} onChange={(evento) => setMarcacao(evento.target.value as MarcacaoPlanejamento)}><option value="NENHUMA">Despesa comum</option><option value="CUSTO_FIXO">Recorrente / custo fixo</option><option value="PISO_HUMANO">Piso humano</option></select></div></>
       ) : (
-        <div className="form__campo">
+        <><div className="form__campo">
           <label htmlFor="planilha-origem">Origem da entrada</label>
           <select id="planilha-origem" value={origemReceita} onChange={(evento) => setOrigemReceita(evento.target.value as OrigemReceita | "")} required>
             <option value="">Escolha a origem</option>
             {ORIGENS.map((opcao) => <option key={opcao.valor} value={opcao.valor}>{opcao.rotulo}</option>)}
           </select>
-        </div>
+        </div><div className="form__campo"><label htmlFor="planilha-recorrencia-receita">Recorrência</label><select id="planilha-recorrencia-receita" value={marcacao} onChange={(evento) => setMarcacao(evento.target.value as MarcacaoPlanejamento)}><option value="NENHUMA">Entrada pontual</option><option value="RECEITA_RECORRENTE">Receita recorrente</option></select></div></>
       )}
       {erro && <p className="form__erro" role="alert">{erro}</p>}
       <div className="form__acoes">

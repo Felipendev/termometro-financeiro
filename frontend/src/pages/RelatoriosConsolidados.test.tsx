@@ -6,10 +6,11 @@ import type { DashboardResponse } from "../types";
 import { Relatorios } from "./Relatorios";
 
 vi.mock("../api", () => ({
-  buscaLancamentos: () => Promise.resolve({ itens: [], temMais: false }),
+  buscaTodosLancamentos: () => Promise.resolve([]),
   buscaRollupAnual: () => Promise.resolve([
     { competencia: "2026-09", entrada: "5000.00", saida: "3200.00", taxaEconomia: "0.360000" },
   ]),
+  buscaFaturasCartao: () => Promise.resolve([]),
 }));
 vi.mock("../components/Banner", () => ({ Banner: () => <div>Viabilidade consolidada</div> }));
 vi.mock("../components/PainelOperacional", () => ({ PainelOperacional: () => <div>Contas a receber e Minhas contas</div> }));

@@ -19,15 +19,23 @@ public final class CalculadoraDoComparativo {
     }
 
     public static List<PontoComparativo> calcula(Map<String, Dinheiro> valoresPorNomeDeItem, Dinheiro rendaLiquida) {
-        Objects.requireNonNull(valoresPorNomeDeItem, "valores não podem ser nulos");
+        List<ItemComparativo> itens = valoresPorNomeDeItem.entrySet().stream()
+                .map(item -> new ItemComparativo(MapeadorDeGrupo.grupoDe(item.getKey()),
+                        item.getKey(), item.getKey(), item.getValue(), "CATALOGO"))
+                .toList();
+        return calcula(itens, rendaLiquida, "CATALOGO");
+    }
+
+    public static List<PontoComparativo> calcula(List<ItemComparativo> itens, Dinheiro rendaLiquida,
+            String fonte) {
+        Objects.requireNonNull(itens, "itens não podem ser nulos");
         Objects.requireNonNull(rendaLiquida, "renda líquida não pode ser nula");
         if (!rendaLiquida.ehPositivo()) {
             return List.of();
         }
 
         Map<GrupoDoComparativo, Dinheiro> totalPorGrupo = new EnumMap<>(GrupoDoComparativo.class);
-        valoresPorNomeDeItem.forEach((nome, valor) -> totalPorGrupo.merge(
-                MapeadorDeGrupo.grupoDe(nome), valor, Dinheiro::somar));
+        itens.forEach(item -> totalPorGrupo.merge(item.grupo(), item.valor(), Dinheiro::somar));
 
         List<PontoComparativo> pontos = new ArrayList<>();
         totalPorGrupo.forEach((grupo, total) -> {
@@ -37,7 +45,11 @@ public final class CalculadoraDoComparativo {
                     total.sobre(rendaLiquida),
                     referencia.map(ReferenciaDoGrupo::bom).orElse(null),
                     referencia.map(ReferenciaDoGrupo::ideal).orElse(null),
-                    referencia.map(ReferenciaDoGrupo::ruim).orElse(null)));
+                    referencia.map(ReferenciaDoGrupo::ruim).orElse(null),
+                    total,
+                    rendaLiquida,
+                    fonte,
+                    itens.stream().filter(item -> item.grupo() == grupo).toList()));
         });
         return List.copyOf(pontos);
     }

@@ -50,6 +50,8 @@ function App() {
   const [versaoLancamentos, setVersaoLancamentos] = useState(0);
   const [configuracoesAbertas, setConfiguracoesAbertas] = useState(false);
   const [abaInicialRelatorios, setAbaInicialRelatorios] = useState<AbaRelatorio>("categorias");
+  const [marcacaoInicialRelatorios, setMarcacaoInicialRelatorios] = useState<"CUSTO_FIXO" | "PISO_HUMANO" | null>(null);
+  const [cartaoInicialRelatorios, setCartaoInicialRelatorios] = useState<string | null>(null);
 
   const carregar = useCallback((competenciaAlvo: string, signal?: AbortSignal) => {
     setEstado({ tipo: "carregando" });
@@ -103,6 +105,11 @@ function App() {
     carregar(competencia);
   }
 
+  function atualizarAposPagamento() {
+    setVersaoLancamentos((versao) => versao + 1);
+    carregar(competencia);
+  }
+
   const exibeCompetencia = aba !== "planilha";
 
   return (
@@ -151,9 +158,9 @@ function App() {
         ) : aba === "lancamentos" ? (
           <Lancamentos competencia={competencia} versao={versaoLancamentos} contas={estado.tipo === "pronto" ? estado.dashboard.contasManuais : []} cartoes={estado.tipo === "pronto" ? estado.dashboard.analise.euDoPresente.cartoesManuais : []} aoNovo={setTipoRapido} aoEditar={setEditando} aoAlterar={concluirLancamento} />
         ) : aba === "relatorios" ? (
-          <Relatorios dashboard={estado.dashboard.analise} pendencias={estado.dashboard.pendencias} contas={estado.dashboard.contasManuais} abaInicial={abaInicialRelatorios} />
+          <Relatorios dashboard={estado.dashboard.analise} pendencias={estado.dashboard.pendencias} contas={estado.dashboard.contasManuais} abaInicial={abaInicialRelatorios} marcacaoInicial={marcacaoInicialRelatorios} cartaoInicial={cartaoInicialRelatorios} aoAlterar={atualizarAposPagamento} />
         ) : (
-          <PainelVisaoGeral dashboard={estado.dashboard.analise} pendencias={estado.dashboard.pendencias} onRodarNaoGasto={rodarNaoGasto} onRodarTriagem={rodarTriagem} onImportar={() => { setAbaInicialRelatorios("cartoes"); setAba("relatorios"); }} onNovoLancamento={setTipoRapido} onVerRelatorios={() => { setAbaInicialRelatorios("categorias"); setAba("relatorios"); }} onVerCartoes={() => { setAbaInicialRelatorios("cartoes"); setAba("relatorios"); }} rodando={rodando} />
+          <PainelVisaoGeral dashboard={estado.dashboard.analise} pendencias={estado.dashboard.pendencias} onRodarNaoGasto={rodarNaoGasto} onRodarTriagem={rodarTriagem} onImportar={() => { setCartaoInicialRelatorios(null); setMarcacaoInicialRelatorios(null); setAbaInicialRelatorios("cartoes"); setAba("relatorios"); }} onNovoLancamento={setTipoRapido} onVerRelatorios={() => { setCartaoInicialRelatorios(null); setMarcacaoInicialRelatorios(null); setAbaInicialRelatorios("categorias"); setAba("relatorios"); }} onVerCartoes={() => { setCartaoInicialRelatorios(null); setMarcacaoInicialRelatorios(null); setAbaInicialRelatorios("cartoes"); setAba("relatorios"); }} onVerFatura={(nome) => { setCartaoInicialRelatorios(nome); setMarcacaoInicialRelatorios(null); setAbaInicialRelatorios("cartoes"); setAba("relatorios"); }} onVerSustentacao={(marcacao) => { setCartaoInicialRelatorios(null); setMarcacaoInicialRelatorios(marcacao); setAbaInicialRelatorios("categorias"); setAba("relatorios"); }} rodando={rodando} />
         )}
 
         {estado.tipo === "pronto" && (tipoRapido || editando) && (

@@ -5,10 +5,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ConsultaLancamentosResponse, DashboardResponse } from "../types";
 import { Relatorios } from "./Relatorios";
 
-const buscaLancamentos = vi.fn();
+const buscaTodosLancamentos = vi.fn();
 vi.mock("../api", () => ({
-  buscaLancamentos: (...args: unknown[]) => buscaLancamentos(...args),
+  buscaTodosLancamentos: (...args: unknown[]) => buscaTodosLancamentos(...args),
   buscaRollupAnual: () => Promise.resolve([]),
+  buscaFaturasCartao: () => Promise.resolve([{ referencia: "IMPORTADO:nubank", nome: "Nubank", limite: null, valorTotal: "39.80", valorPago: "0.00", saldoAberto: "39.80", status: "ABERTA", origem: "IMPORTACAO", pagamentos: [] }]),
+  pagaFaturaCartao: () => Promise.reject(new Error("não usado neste teste")),
+  declaraValorFaturaCartao: () => Promise.reject(new Error("não usado neste teste")),
 }));
 vi.mock("../settings/api", () => ({
   getCartoesManuais: () => Promise.resolve([]),
@@ -41,7 +44,7 @@ describe("Relatorios", () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
   it("mostra contas e cartões pelos movimentos da competência, sem fatura atual", async () => {
-    buscaLancamentos.mockResolvedValue(resposta);
+    buscaTodosLancamentos.mockResolvedValue(resposta.itens);
     const user = userEvent.setup();
     render(<Relatorios dashboard={dashboard} pendencias={[]} contas={[{ id: "conta-1", identificador: "itau", nome: "Conta Itaú", tipo: "CORRENTE", saldo: "99999.00" }]} />);
 
@@ -50,7 +53,7 @@ describe("Relatorios", () => {
     expect(screen.queryByText("R$ 99.999,00")).toBeNull();
 
     await user.click(screen.getByRole("tab", { name: "Cartões" }));
-    expect(await screen.findByText("Compras no período")).toBeTruthy();
+    expect(await screen.findByText("Calculada pelos imports")).toBeTruthy();
     expect(screen.getByText(/39,80/)).toBeTruthy();
     expect(screen.queryByText(/4\.257,74/)).toBeNull();
 

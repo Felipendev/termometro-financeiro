@@ -80,7 +80,7 @@ export function FormularioLancamentoRapido({
         grupoCategoria: categoriaEscolhida?.grupo ?? null,
         naturezaCategoria: categoriaEscolhida ? (marcacao === "CUSTO_FIXO" ? "FIXO" : "VARIAVEL") : null,
         cartaoManualId: tipo === "DESPESA" ? cartao || null : null,
-        marcacaoPlanejamento: tipo === "DESPESA" ? marcacao : "NENHUMA",
+        marcacaoPlanejamento: tipo === "TRANSFERENCIA" ? "NENHUMA" : marcacao,
         origemReceita: tipo === "RECEITA" ? origemReceita || null : null,
       };
       const lancamento = await putLancamentoPlanejado(inicial?.id ?? crypto.randomUUID(), dados);
@@ -91,6 +91,7 @@ export function FormularioLancamentoRapido({
         setValor(formatarEntradaDeDinheiro("0"));
         setCategoria("");
         setOrigemReceita("");
+        setMarcacao("NENHUMA");
       } else {
         aoFechar();
       }
@@ -113,6 +114,7 @@ export function FormularioLancamentoRapido({
         {tipo === "RECEITA" && <div className="form__campo"><label htmlFor="rapido-origem-receita">Origem da receita</label><select id="rapido-origem-receita" value={origemReceita} onChange={(evento) => setOrigemReceita(evento.target.value as OrigemReceita | "")} required><option value="">Escolha a origem</option>{ORIGENS_RECEITA.map((item) => <option value={item.valor} key={item.valor}>{item.rotulo}</option>)}</select></div>}
         {tipo === "DESPESA" && <><div className="form__campo"><label htmlFor="rapido-cartao">Cartão (opcional)</label><div className="seletor-com-icone"><span className="icone-categoria" aria-hidden="true"><CreditCard size={18} /></span><select id="rapido-cartao" value={cartao} onChange={(evento) => { setCartao(evento.target.value); if (evento.target.value) setOrigem(""); }}><option value="">Pagar no débito / pela conta</option>{cartoes.map((item) => <option value={item.id} key={item.id}>{item.nome}</option>)}</select></div></div><div className="form__campo"><label htmlFor="rapido-conta-despesa">Conta de débito (opcional)</label><select id="rapido-conta-despesa" value={origem} disabled={Boolean(cartao)} onChange={(evento) => { setOrigem(evento.target.value); if (evento.target.value) setCartao(""); }}><option value="">Não alterar saldo de conta</option>{contas.map((conta) => <option value={conta.id} key={conta.id}>{conta.nome}</option>)}</select></div></>}
         {tipo === "DESPESA" && <fieldset className="marcacao-opcoes"><legend>O que essa despesa representa?</legend><label className={marcacao === "CUSTO_FIXO" ? "marcacao-opcao marcacao-opcao--ativa" : "marcacao-opcao"}><input type="checkbox" checked={marcacao === "CUSTO_FIXO"} onChange={(evento) => setMarcacao(evento.target.checked ? "CUSTO_FIXO" : "NENHUMA")} /><Repeat2 size={18} /><span><strong>Custo fixo</strong><small>Compromisso recorrente do mês</small></span></label><label className={marcacao === "PISO_HUMANO" ? "marcacao-opcao marcacao-opcao--ativa" : "marcacao-opcao"}><input type="checkbox" checked={marcacao === "PISO_HUMANO"} onChange={(evento) => setMarcacao(evento.target.checked ? "PISO_HUMANO" : "NENHUMA")} /><HeartHandshake size={18} /><span><strong>Piso humano</strong><small>Mínimo necessário para viver bem</small></span></label></fieldset>}
+        {tipo === "RECEITA" && <fieldset className="marcacao-opcoes"><legend>Recorrência</legend><label className={marcacao === "RECEITA_RECORRENTE" ? "marcacao-opcao marcacao-opcao--ativa" : "marcacao-opcao"}><input type="checkbox" checked={marcacao === "RECEITA_RECORRENTE"} onChange={(evento) => setMarcacao(evento.target.checked ? "RECEITA_RECORRENTE" : "NENHUMA")} /><Repeat2 size={18} /><span><strong>Receita recorrente</strong><small>Ex.: salário que entra todos os meses</small></span></label></fieldset>}
         {tipo === "RECEITA" && <div className="form__campo"><label htmlFor="rapido-conta-receita">Entra na conta (opcional)</label><select id="rapido-conta-receita" value={destino} onChange={(evento) => setDestino(evento.target.value)}><option value="">Não alterar saldo de conta</option>{contas.map((conta) => <option value={conta.id} key={conta.id}>{conta.nome}</option>)}</select></div>}
         {erro && <p className="form__erro" role="alert">{erro}</p>}
         <div className="form__acoes"><button type="button" className="botao--texto" onClick={aoFechar}>Cancelar</button><button type="submit" disabled={enviando}><Save size={16} />{enviando ? "Salvando…" : "Salvar"}</button><button type="button" className="botao--secundario" disabled={enviando} onClick={(evento) => salvar(evento, true)}><Plus size={16} />Salvar e criar outra</button></div>

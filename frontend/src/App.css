@@ -187,9 +187,17 @@ table.planilha__tabela { border-collapse: separate; border-spacing: 0; font-size
 .grafico-comparativo__legenda span { display: inline-flex; align-items: center; gap: 6px; }
 .grafico-comparativo__linhas { display: grid; gap: 14px; }
 .grafico-comparativo__linha { display: grid; grid-template-columns: 130px 1fr 52px; align-items: center; gap: 12px; }
-.grafico-comparativo__rotulo { font-size: .84rem; color: var(--cor-texto); }
+.grafico-comparativo__grupo { display: grid; gap: 10px; }
+.grafico-comparativo__rotulo, .grafico-comparativo__valor { border: 0; background: none; padding: 0; color: var(--cor-texto); cursor: pointer; }
+.grafico-comparativo__rotulo { font-size: .84rem; text-align: left; }
 .grafico-comparativo__trilho { position: relative; height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--cor-superficie-suave), #dfe4dc); }
 .grafico-comparativo__valor { text-align: right; font-size: .8rem; font-weight: 700; color: var(--cor-texto); }
+.grafico-comparativo__detalhe { margin: -2px 64px 4px 142px; padding: 12px 14px; border: 1px solid var(--cor-borda); border-radius: 10px; background: var(--cor-superficie-suave); }
+.grafico-comparativo__detalhe > div { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.grafico-comparativo__detalhe > div span, .grafico-comparativo__detalhe small { color: var(--cor-texto-suave); font-size: .72rem; }
+.grafico-comparativo__detalhe ul { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.grafico-comparativo__detalhe li { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.grafico-comparativo__detalhe li span { display: grid; }
 .ponto { position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); }
 .ponto--atual { background: var(--cor-acao); z-index: 3; }
 .ponto--bom { background: var(--cor-verde-claro); border: 2px solid var(--cor-primaria); z-index: 2; }
@@ -212,6 +220,58 @@ table.planilha__tabela { border-collapse: separate; border-spacing: 0; font-size
 .grafico-comparativo__linha-guia { position: absolute; top: 4px; bottom: 30px; width: 0; border-left: 1.5px dashed var(--cor-destaque); pointer-events: none; z-index: 5; transform: translateX(-0.5px); }
 .grafico-comparativo__balao-guia { position: absolute; bottom: 0; transform: translateX(-50%); background: var(--cor-acao); color: #fff; font-size: .74rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 6; }
 .grafico-comparativo__balao-guia::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: var(--cor-acao); }
+
+.totais-sustentacao button { display: grid; grid-template-columns: 1fr auto auto; align-items: center; width: 100%; border: 1px solid var(--cor-borda); border-radius: 8px; padding: 9px 8px; background: #fff; color: inherit; cursor: pointer; }
+.totais-sustentacao button:hover, .totais-sustentacao button:focus-visible { background: var(--cor-superficie-suave); }
+.relatorios__premissas button { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; border: 1px solid transparent; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.relatorios__premissas button.selecionado { border-color: var(--cor-acao); background: var(--cor-superficie-suave); }
+.relatorios__sustentacao-detalhe { margin: 12px 0 20px; padding: 16px; border: 1px solid var(--cor-borda); border-radius: 12px; background: var(--cor-superficie); }
+.relatorios__sustentacao-detalhe > div, .relatorios__sustentacao-detalhe li { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.relatorios__sustentacao-detalhe ul { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.relatorios__sustentacao-detalhe li span { display: grid; }
+.relatorios__sustentacao-detalhe small { color: var(--cor-texto-suave); }
+
+.logo-cartao { display: block; width: 100%; height: 100%; object-fit: contain; }
+.cartao-marca--logo { overflow: hidden; padding: 5px; background: #fff; }
+.cartao-home__acao { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; width: 100%; border: 0; padding: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.cartao-home__acao:hover strong, .cartao-home__acao:focus-visible strong { text-decoration: underline; }
+.faturas { display: grid; gap: 10px; }
+.fatura { border: 1px solid var(--cor-borda); border-radius: 12px; background: var(--cor-superficie); overflow: hidden; }
+.fatura--aberta { border-color: color-mix(in srgb, var(--cor-acao) 45%, var(--cor-borda)); }
+.fatura__resumo { display: grid; grid-template-columns: auto minmax(140px, 1fr) auto auto auto; align-items: center; gap: 12px; width: 100%; border: 0; padding: 14px 16px; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.fatura__resumo > span:nth-child(2) { display: grid; }
+.fatura__resumo small { color: var(--cor-texto-suave); }
+.fatura__status { padding: 4px 8px; border-radius: 999px; background: var(--cor-superficie-suave); font-size: .7rem; font-weight: 700; text-transform: uppercase; }
+.fatura__status--paga { color: var(--cor-primaria); }
+.fatura__status--parcial { color: #8a6415; }
+.fatura__status--aberta { color: var(--cor-perigo); }
+.fatura__status--sem_movimento { color: var(--cor-texto-suave); }
+.fatura__detalhe { display: grid; gap: 16px; padding: 0 16px 16px; border-top: 1px solid var(--cor-borda); }
+.fatura__detalhe dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0 0; }
+.fatura__detalhe dl div { display: grid; gap: 3px; padding: 10px; border-radius: 8px; background: var(--cor-superficie-suave); }
+.fatura__detalhe dt, .fatura__detalhe small { color: var(--cor-texto-suave); font-size: .74rem; }
+.fatura__detalhe h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; }
+.fatura__itens ul, .fatura__pagamentos ul { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.fatura__itens li, .fatura__pagamentos li { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.fatura__itens li span { display: grid; }
+.fatura__form-pagamento { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 10px; padding: 14px; border-radius: 10px; background: var(--cor-superficie-suave); }
+.fatura__form-pagamento label { display: grid; gap: 5px; color: var(--cor-texto-suave); font-size: .76rem; }
+.fatura__form-pagamento > div { grid-column: 1 / -1; display: flex; gap: 8px; }
+.fatura__form-pagamento--ajuste { grid-template-columns: minmax(220px, 1fr); }
+.fatura__acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.relatorio-categoria { width: 100%; border: 1px solid transparent; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.relatorio-categoria:hover, .relatorio-categoria:focus-visible, .relatorio-categoria--ativa { border-color: var(--cor-borda); background: var(--cor-superficie-suave); }
+.relatorio-categoria-detalhe { margin-top: 14px; padding: 16px; border: 1px solid var(--cor-borda); border-radius: 12px; background: var(--cor-superficie); }
+.relatorio-categoria-detalhe > div, .relatorio-categoria-detalhe li { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.relatorio-categoria-detalhe ul { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.relatorio-categoria-detalhe li span { display: grid; }
+.relatorio-categoria-detalhe small { color: var(--cor-texto-suave); }
+@media (max-width: 720px) {
+  .fatura__resumo { grid-template-columns: auto 1fr auto; }
+  .fatura__resumo .fatura__status { grid-column: 2; }
+  .fatura__detalhe dl, .fatura__form-pagamento { grid-template-columns: 1fr; }
+  .grafico-comparativo__detalhe { margin-left: 0; margin-right: 0; }
+}
 .tabela-anual { width: 100%; border-collapse: collapse; font-size: .86rem; }
 .tabela-anual th { text-align: right; padding: 8px 10px; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--cor-texto-suave); border-bottom: 1.5px solid var(--cor-texto); }
 .tabela-anual th:first-child, .tabela-anual td:first-child { text-align: left; }

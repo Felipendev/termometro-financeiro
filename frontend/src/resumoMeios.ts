@@ -57,6 +57,11 @@ export function resumirMovimentosPorMeio(
       }
       if (!item.contaOuCartao) return;
       const nomeNormalizado = item.contaOuCartao.toLocaleLowerCase("pt-BR");
+      if (cartoesPorId.has(item.contaOuCartao)) {
+        acumular(resumoCartoes, item.contaOuCartao,
+          cartoesPorId.get(item.contaOuCartao) ?? "Cartão", tipo, item.valor);
+        return;
+      }
       const cartaoId = cartaoIdPorNome.get(nomeNormalizado);
       if (cartaoId || nomesImportados.has(nomeNormalizado)) {
         acumular(resumoCartoes, cartaoId ?? `importado:${item.contaOuCartao}`,

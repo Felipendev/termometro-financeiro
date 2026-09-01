@@ -1,6 +1,6 @@
-import { ArrowDownCircle, ArrowUpCircle, BarChart3, CreditCard, HeartHandshake, Landmark, Repeat2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, BarChart3, HeartHandshake, Landmark, Repeat2 } from "lucide-react";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { buscaLancamentos, buscaRollupAnual } from "../api";
+import { buscaRollupAnual, buscaTodosLancamentos } from "../api";
 import { IconeCategoria } from "../components/IconeCategoria";
 import { Banner } from "../components/Banner";
 import { ColunaPassado } from "../components/ColunaPassado";
@@ -10,6 +10,7 @@ import { PainelOperacional } from "../components/PainelOperacional";
 import { CartoesSection } from "../settings/CartoesSection";
 import { DividasRotativasSection } from "../settings/DividasRotativasSection";
 import { ImportarInteligente } from "../components/ImportarInteligente";
+import { FaturasCartaoSection } from "../components/FaturasCartaoSection";
 import { formatarDespesa, formatarDinheiro, formatarPercentual, somarDinheiro } from "../format";
 import type { ContaManualResponse, DashboardResponse, LancamentoPlanejadoResponse, MesDoRollupResponse } from "../types";
 import { combinaCategorias } from "../resumoCategorias";
@@ -38,14 +39,19 @@ function fatiasDoGrafico(valores: string[], base: number) {
   ).fatias;
 }
 
-export function Relatorios({ dashboard, pendencias, contas, abaInicial }: {
+export function Relatorios({ dashboard, pendencias, contas, abaInicial, marcacaoInicial, cartaoInicial, aoAlterar }: {
   dashboard: DashboardResponse;
   pendencias: LancamentoPlanejadoResponse[];
   contas: ContaManualResponse[];
   abaInicial?: AbaRelatorio;
+  marcacaoInicial?: "CUSTO_FIXO" | "PISO_HUMANO" | null;
+  cartaoInicial?: string | null;
+  aoAlterar?: () => void;
 }) {
   const [aba, setAba] = useState<AbaRelatorio>(abaInicial ?? "categorias");
   const [filtroCategoria, setFiltroCategoria] = useState("");
+  const [categoriaAberta, setCategoriaAberta] = useState<string | null>(null);
+  const [filtroSustentacao, setFiltroSustentacao] = useState<"CUSTO_FIXO" | "PISO_HUMANO" | null>(marcacaoInicial ?? null);
   const [movimentos, setMovimentos] = useState<LancamentoPlanejadoResponse[]>([]);
   const [erroMeios, setErroMeios] = useState<string | null>(null);
   const [rollupAnual, setRollupAnual] = useState<MesDoRollupResponse[] | null>(null);
@@ -65,20 +71,15 @@ export function Relatorios({ dashboard, pendencias, contas, abaInicial }: {
     cartoesImportados.map((cartao) => cartao.nome),
   ), [cartoesImportados, cartoesManuais, contas, movimentos]);
   const fluxoDoMes = useMemo(() => resumirFluxoDoMes(movimentos), [movimentos]);
+  const itensSustentacao = movimentos.filter((item) => item.marcacaoPlanejamento === filtroSustentacao && item.status !== "CANCELADO");
+  const itensDaCategoria = movimentos.filter((item) => item.tipo === "DESPESA" && item.status !== "CANCELADO"
+    && item.categoria?.nome.localeCompare(categoriaAberta ?? "", "pt-BR", { sensitivity: "base" }) === 0);
 
   useEffect(() => {
     let ativo = true;
     async function carregarMovimentos() {
       try {
-        const itens: LancamentoPlanejadoResponse[] = [];
-        let pagina = 0;
-        let temMais: boolean;
-        do {
-          const resposta = await buscaLancamentos(dashboard.competencia, { pagina, tamanho: 100 });
-          itens.push(...resposta.itens);
-          temMais = resposta.temMais;
-          pagina += 1;
-        } while (temMais);
+        const itens = await buscaTodosLancamentos(dashboard.competencia);
         if (ativo) {
           setMovimentos(itens);
           setErroMeios(null);
@@ -109,14 +110,16 @@ export function Relatorios({ dashboard, pendencias, contas, abaInicial }: {
 
       {aba === "categorias" && <div id="painel-categorias" role="tabpanel">
         <div className="relatorios__premissas" aria-label="Premissas do mês">
-          <div><Repeat2 size={18} /><span>Custo fixo</span><strong>{formatarDespesa(dashboard.viabilidade.custoFixoTotal)}</strong></div>
-          <div><HeartHandshake size={18} /><span>Piso humano</span><strong>{formatarDespesa(dashboard.viabilidade.pisoVariavelTotal)}</strong></div>
+          <button type="button" className={filtroSustentacao === "CUSTO_FIXO" ? "selecionado" : ""} onClick={() => setFiltroSustentacao((atual) => atual === "CUSTO_FIXO" ? null : "CUSTO_FIXO")}><Repeat2 size={18} /><span>Custo fixo</span><strong>{formatarDespesa(dashboard.viabilidade.custoFixoTotal)}</strong></button>
+          <button type="button" className={filtroSustentacao === "PISO_HUMANO" ? "selecionado" : ""} onClick={() => setFiltroSustentacao((atual) => atual === "PISO_HUMANO" ? null : "PISO_HUMANO")}><HeartHandshake size={18} /><span>Piso humano</span><strong>{formatarDespesa(dashboard.viabilidade.pisoVariavelTotal)}</strong></button>
           <p>Estes totais vêm das despesas marcadas no lançamento; o cadastro antigo é usado apenas enquanto o mês ainda não possuir marcações.</p>
         </div>
+        {filtroSustentacao && <section className="relatorios__sustentacao-detalhe" aria-live="polite"><div><h3>{filtroSustentacao === "CUSTO_FIXO" ? "Despesas recorrentes do mês" : "Despesas do piso humano"}</h3><button type="button" className="link-painel" onClick={() => setFiltroSustentacao(null)}>Fechar</button></div>{itensSustentacao.length === 0 ? <p className="vazio">Nenhum lançamento real marcado neste mês; o total exibido ainda vem do catálogo antigo.</p> : <ul>{itensSustentacao.map((item) => <li key={item.id}><span><strong>{item.descricao}</strong><small>{item.categoria?.nome ?? "Sem categoria"} · {item.vencimento}</small></span><b>{formatarDespesa(item.valor)}</b></li>)}</ul>}</section>}
         {categorias.length === 0 ? <div className="estado-vazio estado-vazio--alto"><BarChart3 size={28} /><strong>Nenhuma despesa classificada neste mês</strong><p>Crie ou importe lançamentos e escolha suas categorias para montar o relatório.</p></div> : <div className="relatorio-categorias">
-          <div className="relatorio-categorias__lista"><p className="relatorio-categorias__rotulo">Despesas</p>{categorias.map(({ nome, total: valor }, indice) => <div className="relatorio-categoria" key={nome}><IconeCategoria nome={nome} cor={CORES[indice % CORES.length]} /><span>{nome}</span><div><strong>{formatarDespesa(valor)}</strong><small>{((Number(valor) / base) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</small></div></div>)}<div className="relatorio-categorias__total"><span>Total</span><strong>{formatarDespesa(total)}</strong></div></div>
+          <div className="relatorio-categorias__lista"><p className="relatorio-categorias__rotulo">Despesas</p>{categorias.map(({ nome, total: valor }, indice) => <button type="button" className={`relatorio-categoria ${categoriaAberta === nome ? "relatorio-categoria--ativa" : ""}`} aria-expanded={categoriaAberta === nome} onClick={() => setCategoriaAberta((atual) => atual === nome ? null : nome)} key={nome}><IconeCategoria nome={nome} cor={CORES[indice % CORES.length]} /><span>{nome}</span><div><strong>{formatarDespesa(valor)}</strong><small>{((Number(valor) / base) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</small></div></button>)}<div className="relatorio-categorias__total"><span>Total</span><strong>{formatarDespesa(total)}</strong></div></div>
           <div className="relatorio-categorias__visual"><p>Gastos classificados no mês</p><div className="grafico-rosca grafico-rosca--grande" style={estilo}><span>{categorias.length}</span><small>categorias</small></div></div>
         </div>}
+        {categoriaAberta && <section className="relatorio-categoria-detalhe"><div><div><p className="eyebrow">Incluído em {categoriaAberta}</p><h3>Valores específicos do mês</h3></div><button type="button" className="link-painel" onClick={() => setCategoriaAberta(null)}>Fechar</button></div>{itensDaCategoria.length === 0 ? <p className="vazio">Não há itens detalháveis; atualize a análise para sincronizar as categorias importadas.</p> : <ul>{itensDaCategoria.map((item) => <li key={item.id}><span><strong>{item.descricao}</strong><small>{item.vencimento} · {item.origem}</small></span><b>{formatarDespesa(item.valor)}</b></li>)}</ul>}</section>}
       </div>}
 
       {aba === "fluxo" && <div id="painel-fluxo" role="tabpanel" className="relatorio-painel">
@@ -134,9 +137,7 @@ export function Relatorios({ dashboard, pendencias, contas, abaInicial }: {
 
       {aba === "cartoes" && <div id="painel-cartoes" role="tabpanel">
         {erroMeios && <p className="form__erro" role="alert">{erroMeios}</p>}
-        <div className="relatorio-painel relatorio-lista">
-          {resumoMeios.cartoes.length === 0 ? <div className="estado-vazio"><CreditCard size={26} /><strong>Nenhum cartão com movimento no mês</strong></div> : resumoMeios.cartoes.map((cartao) => <div className="relatorio-linha" key={cartao.id}><span className="relatorio-linha__icone"><CreditCard size={18} /></span><div><strong>{cartao.nome}</strong><small>Compras no período</small></div><b className="valor--despesa">{formatarDespesa(cartao.despesas)}</b></div>)}
-        </div>
+        <FaturasCartaoSection competencia={dashboard.competencia} contas={contas} movimentos={movimentos} nomeInicial={cartaoInicial} aoPagar={aoAlterar} />
         <div className="config__grid config__grid--duas-colunas relatorio-cartoes-cadastro">
           <CartoesSection />
           <ImportarInteligente />

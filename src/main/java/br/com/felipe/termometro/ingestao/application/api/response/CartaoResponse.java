@@ -1,6 +1,7 @@
 package br.com.felipe.termometro.ingestao.application.api.response;
 
 import br.com.felipe.termometro.ingestao.domain.ContaBancaria;
+import br.com.felipe.termometro.cartao.domain.Cartao;
 import br.com.felipe.termometro.shared.Dinheiro;
 import br.com.felipe.termometro.shared.Percentual;
 
@@ -29,5 +30,14 @@ public record CartaoResponse(
                 .orElse(null);
         return new CartaoResponse(conta.identificador(), conta.nome(),
                 conta.limiteOpcional().orElse(null), gastoNoMes, percentualUsado);
+    }
+
+    public static CartaoResponse de(Cartao cartao, Dinheiro gastoNoMes) {
+        Percentual percentualUsado = cartao.limiteOpcional()
+                .filter(limite -> !limite.ehZero())
+                .map(limite -> Percentual.deValor(gastoNoMes, limite))
+                .orElse(null);
+        return new CartaoResponse(cartao.id().toString(), cartao.nome(), cartao.limite(),
+                gastoNoMes, percentualUsado);
     }
 }

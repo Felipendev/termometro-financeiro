@@ -34,4 +34,19 @@ class LancamentoPlanejadoTest {
 
   assertThat(item.liquidar().marcacaoPlanejamento()).isEqualTo(MarcacaoPlanejamento.CUSTO_FIXO);
  }
+
+ @Test void permiteMarcarReceitaRecorrenteERecusaMarcacoesIncompativeis(){
+  var receita = new LancamentoPlanejado(UUID.randomUUID(), "Salário",
+    TipoLancamentoPlanejado.RECEITA, Dinheiro.de("5000"), LocalDate.of(2026,9,5),
+    StatusLancamentoPlanejado.PENDENTE, null, null, null, null, null,
+    MarcacaoPlanejamento.RECEITA_RECORRENTE, OrigemReceita.SALARIO);
+
+  assertThat(receita.liquidar().marcacaoPlanejamento())
+    .isEqualTo(MarcacaoPlanejamento.RECEITA_RECORRENTE);
+  assertThatThrownBy(() -> new LancamentoPlanejado(UUID.randomUUID(), "Salário",
+    TipoLancamentoPlanejado.RECEITA, Dinheiro.de("5000"), LocalDate.of(2026,9,5),
+    StatusLancamentoPlanejado.PENDENTE, null, null, null, null, null,
+    MarcacaoPlanejamento.CUSTO_FIXO, OrigemReceita.SALARIO))
+    .isInstanceOf(IllegalArgumentException.class);
+ }
 }

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/sistema")
 public class CompatibilidadeRestController {
 
-    public static final String CONTRATO_API = "2026-09-01-planilha-editavel-v1";
+    public static final String CONTRATO_API = "2026-09-01-faturas-saldo-recorrencia-v2";
 
     @GetMapping("/compatibilidade")
     public CompatibilidadeResponse compatibilidade() {

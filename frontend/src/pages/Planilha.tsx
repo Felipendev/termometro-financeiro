@@ -391,6 +391,9 @@ export function Planilha() {
                       {item.origem === "MANUAL" ? "Manual" : item.origem}
                     </span>
                     <strong>{item.descricao}</strong>
+                    {item.marcacaoPlanejamento === "CUSTO_FIXO" && <span className="planilha__selo">Recorrente</span>}
+                    {item.marcacaoPlanejamento === "PISO_HUMANO" && <span className="planilha__selo">Piso humano</span>}
+                    {item.marcacaoPlanejamento === "RECEITA_RECORRENTE" && <span className="planilha__selo">Receita recorrente</span>}
                     {item.usoDeCredito && SELO_USO_DE_CREDITO[item.usoDeCredito] && (
                       <span className={`planilha__selo ${SELO_USO_DE_CREDITO[item.usoDeCredito].classe}`}>
                         {SELO_USO_DE_CREDITO[item.usoDeCredito].texto}
