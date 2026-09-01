@@ -1,0 +1,28 @@
+{
+  "feature": "lancamentos",
+  "status": "completed",
+  "method": "TDD",
+  "checklist": [
+    "Escrever teste vermelho antes da implementação de cada tarefa",
+    "Executar unitários, integração e build da camada alterada",
+    "Não usar nem alterar dados pessoais/importados na validação automática",
+    "Validar teclado, desktop e mobile antes de concluir"
+  ],
+  "tasks": [
+    {"id":"L01","status":"completed","title":"Testes e migração de metadados do lançamento manual","testsFirst":["LancamentoPlanejadoTest","LancamentoPlanejadoInfraRepositoryIT"]},
+    {"id":"L02","status":"completed","title":"Categoria explícita, cartão e liquidação/reabertura atômicos","dependsOn":["L01"],"testsFirst":["LancamentoPlanejadoApplicationServiceTest","LancamentoPlanejadoRequestTest"]},
+    {"id":"L03","status":"completed","title":"Consulta paginada e filtros combináveis","dependsOn":["L01"],"testsFirst":["ConsultaLancamentosServiceTest","LancamentosRestControllerTest"]},
+    {"id":"L04","status":"completed","title":"Comandos de editar, cancelar e proteção de importados","dependsOn":["L02"],"testsFirst":["LancamentoPlanejadoApplicationServiceTest","LancamentosRestControllerTest"]},
+    {"id":"L05","status":"completed","title":"Testes React da tela e do modal","dependsOn":["L03"],"testsFirst":["LancamentosPage.test.tsx","FormularioLancamentoRapido.test.tsx"]},
+    {"id":"L06","status":"completed","title":"Tela de Lançamentos, filtros, resumo e ações","dependsOn":["L04","L05"],"testsFirst":["testes L05 verdes"]},
+    {"id":"L07","status":"completed","title":"Integração ponta a ponta e validação visual","dependsOn":["L06"],"testsFirst":["LancamentosRestControllerTest","LancamentosPage.test.tsx"]},
+    {"id":"L08","status":"completed","title":"Corrigir máscara monetária, ícones e sincronização das análises","dependsOn":["L06"],"testsFirst":["format.test.ts","LancamentoPlanejadoInfraRepositoryIT"]},
+    {"id":"L09","status":"completed","title":"Nova navegação e dashboard conforme referência Figma","dependsOn":["L08"],"testsFirst":["navigation.test.ts","resumoCategorias.test.ts","DashboardApplicationServiceTest"]},
+    {"id":"L10","status":"completed","title":"Relatórios e flags custo fixo/piso humano","dependsOn":["L08"],"testsFirst":["TotaisMarcadosDoMesTest","RelatoriosPage.test.tsx"]},
+    {"id":"L11","status":"completed","title":"Validação integrada e visual da reformulação","dependsOn":["L09","L10"],"testsFirst":["LancamentosPage.test.tsx","RelatoriosPage.test.tsx","mvn test"]},
+    {"id":"L12","status":"completed","title":"Idempotência e estorno atômico de transferências","dependsOn":["L04"],"testsFirst":["LancamentoPlanejadoApplicationServiceTest"]},
+    {"id":"L13","status":"completed","title":"Blindar reconciliação dos movimentos legados","dependsOn":["L08"],"testsFirst":["LancamentoPlanejadoInfraRepositoryIT"]},
+    {"id":"L14","status":"completed","title":"Consulta unificada, filtros, paginação e resumo realizado/previsto","dependsOn":["L12"],"testsFirst":["ConsultaLancamentosServiceTest","LancamentosRestControllerTest","LancamentoPlanejadoInfraRepositoryIT"]},
+    {"id":"L15","status":"completed","title":"Estabilizar suíte completa e completar relatórios","dependsOn":["L13","L14"],"testsFirst":["BancoDeTesteIT","RelatoriosPage.test.tsx","resumoMeios.test.ts","mvn test"]}
+  ]
+}

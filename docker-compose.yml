@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: termometro-db
+    environment:
+      POSTGRES_DB: termometro
+      POSTGRES_USER: termometro
+      POSTGRES_PASSWORD: termometro
+    ports:
+      - "5432:5432"
+    volumes:
+      - termometro-dados:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U termometro -d termometro"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  termometro-dados:

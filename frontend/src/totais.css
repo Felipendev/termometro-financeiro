@@ -1,0 +1,8 @@
+.cartao__total-titulo {
+  display: block;
+  margin-top: 4px;
+  color: var(--cor-primaria);
+  font-size: 0.84rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}

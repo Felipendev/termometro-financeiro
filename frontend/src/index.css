@@ -1,0 +1,40 @@
+:root {
+  /* Superfícies — paleta papel/tinta (adendo Fase 1, 2026-08-28) */
+  --cor-fundo: #f6f1e4;
+  --cor-superficie: #efe8d6;
+  --cor-superficie-suave: #e9e0c9;
+  --cor-borda: #d9cfb4;
+  --cor-texto: #20241d;
+  --cor-texto-suave: #6b6656;
+
+  /* Ação e marca — tinta escura, não mais verde puro nos botões/topbar */
+  --cor-acao: #131a20;
+  --cor-acao-escura: #0a0f13;
+  --cor-destaque: #b8842e;
+
+  /* Semântica de status — continuam com significado próprio, agora sobre papel */
+  --cor-primaria: #4c8f5f;
+  --cor-primaria-escura: #3a7048;
+  --cor-perigo: #bd534b;
+  --cor-perigo-fundo: #f6e4e1;
+  --cor-alerta: #a3762a;
+  --cor-alerta-fundo: #f2e6cc;
+  --cor-azul: #4775a3;
+  --cor-amarelo: #c79a35;
+  --cor-vermelho: #c6503e;
+  --cor-laranja: #d1793f;
+  --cor-verde-claro: #a9cf9a;
+
+  --raio: 10px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-width: 320px; }
+body { background: var(--cor-fundo); color: var(--cor-texto); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.45; }
+h1, h2, h3, h4, p { margin-top: 0; }
+h1, h2, h3, h4 { letter-spacing: -0.025em; }
+dl, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+button, input { font: inherit; }
+button { cursor: pointer; }

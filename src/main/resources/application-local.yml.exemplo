@@ -1,0 +1,4 @@
+# Copie para application-local.yml (que está no .gitignore) e preencha.
+# Rode com: mvn spring-boot:run -Dspring-boot.run.profiles=local
+#
+# Alternativa preferida: variáveis de ambiente, sem arquivo nenhum com segredo dentro.

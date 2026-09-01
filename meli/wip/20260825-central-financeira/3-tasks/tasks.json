@@ -1,0 +1,24 @@
+{
+  "feature": "central-financeira",
+  "status": "planned",
+  "method": "TDD",
+  "checklist": [
+    "Escrever o teste vermelho antes de cada implementação",
+    "Executar testes unitários da tarefa",
+    "Executar mvn test e npm run build ao fim de cada camada",
+    "Revisar acessibilidade e responsividade do componente alterado",
+    "Não testar upload de documentos pessoais sem confirmação explícita"
+  ],
+  "tasks": [
+    { "id": "T01", "layer": 1, "status": "completed", "title": "Testes e orquestrador pós-importação", "dependsOn": [], "testsFirst": ["ImportacaoProcessadaServiceTest"], "acceptance": ["processa classificação, não-gasto, compromissos e triagem por competência", "idempotência para lote sem transação nova"] },
+    { "id": "T02", "layer": 1, "status": "completed", "title": "Conectar importação ao processamento e estender resposta", "dependsOn": ["T01"], "testsFirst": ["ImportacaoRestControllerTest", "IngestaoApplicationServiceTest"], "acceptance": ["CSV e PDF retornam competências e contagens processadas"] },
+    { "id": "T03", "layer": 1, "title": "Contas manuais: domínio, migração, API e testes", "dependsOn": [], "testsFirst": ["ContaManualTest", "ContaManualApplicationServiceTest", "ContaManualInfraRepositoryIT"], "acceptance": ["CRUD e saldo de conta manual"] },
+    { "id": "T04", "layer": 1, "title": "Lançamentos manuais e planejados: domínio, migração, API e testes", "dependsOn": ["T03"], "testsFirst": ["LancamentoPlanejadoTest", "LancamentoPlanejadoApplicationServiceTest", "LancamentoPlanejadoInfraRepositoryIT"], "acceptance": ["vencimento, status e liquidação idempotente", "transferência equilibrada e não-gasto", "categoria explícita chega ao resumo sem depender de regra automática", "conta ou cartão selecionado é preservado", "salvar e criar outra mantém o modal pronto para novo lançamento"] },
+    { "id": "T05", "layer": 1, "title": "Associar cartão manual à importação", "dependsOn": ["T02"], "testsFirst": ["CartaoApplicationServiceTest", "CartaoCadastroApplicationServiceTest"], "acceptance": ["gasto importado aparece no cartão associado sem somar fatura duas vezes"] },
+    { "id": "T06", "layer": 1, "title": "DTO e endpoint Dashboard Início", "dependsOn": ["T02", "T03", "T04", "T05"], "testsFirst": ["DashboardInicioApplicationServiceTest", "DashboardInicioRestControllerTest"], "acceptance": ["resumo, contas, cartões, pendências, categorias e orçamento em uma chamada"] },
+    { "id": "T07", "layer": 1, "title": "Testes React da home e componentes base", "dependsOn": ["T06"], "testsFirst": ["DashboardInicio.test.tsx", "AtalhosRapidos.test.tsx"], "acceptance": ["estado vazio, ocultar valores, atualização após importação"] },
+    { "id": "T08", "layer": 1, "title": "Implementar home Organizze-like e formulários rápidos", "dependsOn": ["T07"], "testsFirst": ["testes T07 verdes antes do componente"], "acceptance": ["grid responsivo e atalhos de despesa/receita/transferência/importação"] },
+    { "id": "T09", "layer": 2, "title": "Integração ponta a ponta local", "dependsOn": ["T08"], "testsFirst": ["DashboardInicioIT", "ImportacaoParaDashboardInicioIT"], "acceptance": ["importação atualiza o dashboard da competência correta"] },
+    { "id": "T10", "layer": 3, "title": "Checklist de qualidade e validação visual", "dependsOn": ["T09"], "testsFirst": [], "acceptance": ["mvn test", "npm run build", "lint sem erros novos", "verificação desktop e mobile"] }
+  ]
+}
