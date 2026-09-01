@@ -19,6 +19,7 @@ import br.com.felipe.termometro.planilha.domain.SaldoInicialPlanilha;
 import br.com.felipe.termometro.planilha.domain.TipoItemDoDia;
 import br.com.felipe.termometro.shared.Competencia;
 import br.com.felipe.termometro.shared.Dinheiro;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
  * {@link LancamentoPlanejadoRepository} e {@link LancamentoImportadoRepository} — as mesmas
  * portas que já fundem banco e manual para o {@code ConsultaLancamentosService} — só que
  * agrupando por dia em vez de por página, e cascateando o saldo mês após mês. A âncora manual
- * é opcional: sem ela, o replay começa no primeiro mês que possui movimento.
+ * é opcional: sem uma âncora anterior ao mês corrente, a linha do tempo começa no mês atual
+ * para que importações históricas não contaminem o caixa que o usuário passou a acompanhar agora.
  */
 @Service
 @RequiredArgsConstructor
@@ -47,19 +49,20 @@ public class PlanilhaApplicationService implements PlanilhaService {
     private final ObservacaoDoDiaRepository observacaoDoDiaRepository;
     private final SaldoInicialRepository saldoInicialRepository;
     private final LancamentoPlanejadoApplicationService lancamentoPlanejadoService;
+    private final Clock relogio;
 
     @Override
     public PlanilhaDoMes consultaComItensExtras(Competencia competencia, Map<LocalDate, List<ItemDoDia>> itensExtras) {
         Optional<SaldoInicialPlanilha> saldoCadastrado = saldoInicialRepository.busca();
+        Competencia competenciaAtual = Competencia.atual(relogio);
+        Competencia inicioNatural = competencia.compareTo(competenciaAtual) >= 0
+                ? competenciaAtual : competencia;
         boolean usaSaldoCadastrado = saldoCadastrado
-                .map(saldo -> saldo.dataReferencia().isBefore(competencia.primeiroDia()))
+                .map(saldo -> saldo.dataReferencia().isBefore(inicioNatural.primeiroDia()))
                 .orElse(false);
         LocalDate inicioDoReplay = usaSaldoCadastrado
                 ? saldoCadastrado.orElseThrow().dataReferencia().plusDays(1)
-                : primeiraDataFinanceira(itensExtras)
-                        .filter(data -> !data.isAfter(competencia.ultimoDia()))
-                        .map(data -> Competencia.de(data).primeiroDia())
-                        .orElse(competencia.primeiroDia());
+                : inicioNatural.primeiroDia();
 
         List<Competencia> competenciasDeApoio = Competencia.de(inicioDoReplay).ate(competencia).toList();
 
@@ -91,16 +94,6 @@ public class PlanilhaApplicationService implements PlanilhaService {
                 .toList();
 
         return PlanilhaDoMes.de(competencia, diasDoMesPedido);
-    }
-
-    private Optional<LocalDate> primeiraDataFinanceira(Map<LocalDate, List<ItemDoDia>> itensExtras) {
-        return java.util.stream.Stream.of(
-                        lancamentoPlanejadoRepository.primeiraData(),
-                        lancamentoImportadoRepository.primeiraData(),
-                        diarioOverrideRepository.primeiraData(),
-                        itensExtras.keySet().stream().min(LocalDate::compareTo))
-                .flatMap(Optional::stream)
-                .min(LocalDate::compareTo);
     }
 
     @Override

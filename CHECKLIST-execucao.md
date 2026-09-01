@@ -288,3 +288,15 @@ faturas sem duplicar consumo no Comparativo.
 - [x] Planilha abre e calcula usando as entradas e saídas existentes, sem exigir saldo manual
 - [x] Saldo manual é uma conciliação opcional e não bloqueia o próprio mês nem meses anteriores
 - [x] Cascata automática validada sem âncora e com âncora dentro do mês consultado
+
+### Revisão responsiva e continuidade do saldo ✅
+
+- [x] Navegação principal legível em 320 px, celular, tablet e desktop
+- [x] Cartões e faturas sem sobreposição; modais limitados à altura visível
+- [x] Abas de Relatórios sempre acessíveis e tabela anual legível sem corte lateral
+- [x] Comparativo com régua e pontos legíveis em telas estreitas
+- [x] Planilha mostra um mês no celular/tablet e dois no desktop, sem rolagem horizontal
+- [x] Saldo do mês usa `entrada - saída - diário` e o fechamento inicia o mês seguinte
+- [x] Cenário `10 → 8 → 6 → 4 → 2 → 10.000` coberto por teste automatizado
+- [x] Validado em dados reais: setembro fecha em R$ 1.005,38 e outubro começa em R$ 1.005,38
+- [x] `npm run build` e suíte completa com 483 testes aprovados

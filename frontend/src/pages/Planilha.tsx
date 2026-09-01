@@ -32,6 +32,15 @@ function numeroDoDia(data: string): string {
   return data.split("-")[2];
 }
 
+function ValorDaPlanilha({ valor }: { valor: string }) {
+  return (
+    <>
+      <span className="planilha__valor-desktop">{formatarDinheiro(valor)}</span>
+      <span className="planilha__valor-mobile">{formatarDinheiro(valor).replace(/R\$\s?/, "")}</span>
+    </>
+  );
+}
+
 const CLASSE_POR_FAIXA: Record<string, string> = {
   VERMELHO: "planilha-saldo--vermelho",
   LARANJA: "planilha-saldo--laranja",
@@ -72,7 +81,15 @@ export function Planilha() {
   const [saldoInicialValor, setSaldoInicialValor] = useState("");
   const [enviandoSaldoInicial, setEnviandoSaldoInicial] = useState(false);
   const [simuladorAberto, setSimuladorAberto] = useState(false);
+  const [layoutCompacto, setLayoutCompacto] = useState(() => window.matchMedia("(max-width: 900px)").matches);
   const arrasteRef = useRef<Arraste>(null);
+
+  useEffect(() => {
+    const consulta = window.matchMedia("(max-width: 900px)");
+    const atualizarLayout = () => setLayoutCompacto(consulta.matches);
+    consulta.addEventListener("change", atualizarLayout);
+    return () => consulta.removeEventListener("change", atualizarLayout);
+  }, []);
 
   const carregar = useCallback((mesBase: string) => {
     setEstado({ tipo: "carregando" });
@@ -231,7 +248,8 @@ export function Planilha() {
     );
   }
 
-  const maiorQuantidadeDeDias = Math.max(...estado.meses.map((mes) => mes.dias.length));
+  const mesesExibidos = estado.meses.slice(0, layoutCompacto ? 1 : 2);
+  const maiorQuantidadeDeDias = Math.max(...mesesExibidos.map((mes) => mes.dias.length));
 
   return (
     <div className="planilha">
@@ -239,7 +257,10 @@ export function Planilha() {
         <button type="button" className="botao--icone" onClick={() => setMesInicial((atual) => competenciaMaisMeses(atual, -1))} aria-label="Meses anteriores">
           <ChevronLeft size={17} />
         </button>
-        <strong>{formatarCompetencia(estado.meses[0].competencia)} — {formatarCompetencia(estado.meses[estado.meses.length - 1].competencia)}</strong>
+        <strong className="planilha__periodo">
+          <span className="planilha__periodo-desktop">{layoutCompacto ? formatarCompetencia(mesesExibidos[0].competencia) : `${formatarCompetencia(mesesExibidos[0].competencia)} — ${formatarCompetencia(mesesExibidos[mesesExibidos.length - 1].competencia)}`}</span>
+          <span className="planilha__periodo-mobile">{formatarCompetencia(estado.meses[0].competencia)}</span>
+        </strong>
         <button type="button" className="botao--icone" onClick={() => setMesInicial((atual) => competenciaMaisMeses(atual, 1))} aria-label="Próximos meses">
           <ChevronRight size={17} />
         </button>
@@ -248,11 +269,12 @@ export function Planilha() {
         </button>
       </div>
 
+      <p className="planilha__moeda-mobile">Valores em R$</p>
       <div className="planilha__scroll">
         <table className="planilha__tabela">
           <thead>
             <tr className="planilha__linha-mes">
-              {estado.meses.map((mes) => (
+              {mesesExibidos.map((mes) => (
                 <th key={mes.competencia} colSpan={5}>
                   {formatarCompetencia(mes.competencia)}
                   {mes.totalDeficitDisfarcado !== "0.00" && (
@@ -264,7 +286,7 @@ export function Planilha() {
               ))}
             </tr>
             <tr className="planilha__linha-colunas">
-              {estado.meses.map((mes) => (
+              {mesesExibidos.map((mes) => (
                 <Fragment key={mes.competencia}>
                   <th className="planilha__col-data">Data</th>
                   <th>Entrada</th>
@@ -278,7 +300,7 @@ export function Planilha() {
           <tbody>
             {Array.from({ length: maiorQuantidadeDeDias }, (_, linha) => (
               <tr key={linha}>
-                {estado.meses.map((mes) => {
+                {mesesExibidos.map((mes) => {
                   const dia = mes.dias[linha];
                   if (!dia) return <Fragment key={mes.competencia}><td colSpan={5} /></Fragment>;
                   const emEdicao = celulaEmEdicao?.competencia === mes.competencia && celulaEmEdicao.data === dia.data;
@@ -298,10 +320,10 @@ export function Planilha() {
                         </button>
                       </td>
                       <td className="planilha__valor planilha__valor--clicavel" onClick={() => abrirComposicao(dia)}>
-                        {dia.entrada !== "0.00" ? formatarDinheiro(dia.entrada) : "—"}
+                        {dia.entrada !== "0.00" ? <ValorDaPlanilha valor={dia.entrada} /> : "—"}
                       </td>
                       <td className="planilha__valor planilha__valor--clicavel" onClick={() => abrirComposicao(dia)}>
-                        {dia.saida !== "0.00" ? formatarDinheiro(dia.saida) : "—"}
+                        {dia.saida !== "0.00" ? <ValorDaPlanilha valor={dia.saida} /> : "—"}
                       </td>
                       <td
                         className={`planilha__diario ${emPreVisualizacaoDeArraste ? "planilha__diario--alvo" : ""}`}
@@ -319,7 +341,7 @@ export function Planilha() {
                           />
                         ) : (
                           <span onClick={() => abrirEdicaoDiario(mes.competencia, dia)}>
-                            {formatarDinheiro(dia.diario)}
+                            <ValorDaPlanilha valor={dia.diario} />
                           </span>
                         )}
                         <span
@@ -328,7 +350,7 @@ export function Planilha() {
                         />
                       </td>
                       <td className={`planilha__saldo ${CLASSE_POR_FAIXA[dia.faixaSaldo] ?? ""}`}>
-                        {formatarDinheiro(dia.saldo)}
+                        <ValorDaPlanilha valor={dia.saldo} />
                       </td>
                     </Fragment>
                   );
@@ -338,13 +360,13 @@ export function Planilha() {
           </tbody>
           <tfoot>
             <tr>
-              {estado.meses.map((mes) => (
+              {mesesExibidos.map((mes) => (
                 <Fragment key={mes.competencia}>
                   <td className="planilha__col-data">Total</td>
-                  <td>{formatarDinheiro(mes.totalEntrada)}</td>
-                  <td>{formatarDinheiro(mes.totalSaida)}</td>
-                  <td>{formatarDinheiro(mes.totalDiario)}</td>
-                  <td>{formatarDinheiro(mes.saldoFinal)}</td>
+                  <td><ValorDaPlanilha valor={mes.totalEntrada} /></td>
+                  <td><ValorDaPlanilha valor={mes.totalSaida} /></td>
+                  <td><ValorDaPlanilha valor={mes.totalDiario} /></td>
+                  <td><ValorDaPlanilha valor={mes.saldoFinal} /></td>
                 </Fragment>
               ))}
             </tr>

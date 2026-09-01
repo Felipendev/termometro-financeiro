@@ -18,7 +18,10 @@ import br.com.felipe.termometro.planilha.application.repository.DiarioOverrideRe
 import br.com.felipe.termometro.planilha.application.repository.ObservacaoDoDiaRepository;
 import br.com.felipe.termometro.planilha.application.repository.SaldoInicialRepository;
 import br.com.felipe.termometro.shared.Dinheiro;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -46,7 +49,8 @@ class PlanilhaApplicationServiceEdicaoTest {
         PlanilhaApplicationService service = new PlanilhaApplicationService(
                 planejados, mock(LancamentoImportadoRepository.class),
                 mock(DiarioOverrideRepository.class), mock(ObservacaoDoDiaRepository.class),
-                mock(SaldoInicialRepository.class), lancamentos);
+                mock(SaldoInicialRepository.class), lancamentos,
+                Clock.fixed(Instant.parse("2026-09-01T12:00:00Z"), ZoneOffset.UTC));
 
         service.editaLancamento(alteracoes);
 
@@ -71,7 +75,8 @@ class PlanilhaApplicationServiceEdicaoTest {
         PlanilhaApplicationService service = new PlanilhaApplicationService(
                 planejados, mock(LancamentoImportadoRepository.class),
                 mock(DiarioOverrideRepository.class), mock(ObservacaoDoDiaRepository.class),
-                mock(SaldoInicialRepository.class), lancamentos);
+                mock(SaldoInicialRepository.class), lancamentos,
+                Clock.fixed(Instant.parse("2026-09-01T12:00:00Z"), ZoneOffset.UTC));
 
         service.removeLancamento(id);
 
