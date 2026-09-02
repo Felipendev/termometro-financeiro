@@ -1,7 +1,7 @@
 server:
-  servlet:
-    context-path: /termometro/api
-  port: 8080
+  # Sem context-path: WebConfig prefixa só os @RestController com /termometro/api, deixando a
+  # raiz do domínio livre pra servir o front-end buildado (classpath:/static).
+  port: ${PORT:8080}
   error:
     include-message: always
 

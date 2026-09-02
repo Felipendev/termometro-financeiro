@@ -7,7 +7,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * CORS pro front-end (fatia 13, RN-11) — sem isso o dev server do Vite (porta diferente da API)
- * não consegue chamar {@code /v1/**}. Origem configurável via {@code app.cors.allowed-origins}
+ * não consegue chamar {@code /termometro/api/v1/**} (ver {@link WebConfig}). Origem configurável
+ * via {@code app.cors.allowed-origins}
  * (aceita lista separada por vírgula; default o dev server padrão do Vite). Sistema é
  * single-tenant de uso pessoal — não há necessidade de uma lista dinâmica vinda de banco, só a
  * config, mesmo espírito de {@code pluggy.item-ids}.
@@ -24,7 +25,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/v1/**")
+        registry.addMapping("/termometro/api/v1/**")
                 .allowedOrigins(origensPermitidas)
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*");

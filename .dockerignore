@@ -1,0 +1,14 @@
+target/
+frontend/node_modules/
+frontend/dist/
+.git/
+.idea/
+.vscode/
+.claude/
+_backup_*/
+_to_delete/
+_frontend_staging*/
+tmp/
+prints-tela-aorganizze/
+*.log
+.jqwik-database
