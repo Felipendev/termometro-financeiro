@@ -18,8 +18,10 @@ import br.com.felipe.termometro.contamanual.application.repository.ContaManualRe
 import br.com.felipe.termometro.contamanual.domain.ContaManual;
 import br.com.felipe.termometro.contamanual.domain.TipoContaManual;
 import br.com.felipe.termometro.lancamentoplanejado.application.repository.LancamentoPlanejadoRepository;
+import br.com.felipe.termometro.lancamentoplanejado.recorrencia.RecorrenciaLancamentoService;
 import br.com.felipe.termometro.lancamentoplanejado.domain.LancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.CategoriaDoLancamento;
+import br.com.felipe.termometro.lancamentoplanejado.domain.MarcacaoPlanejamento;
 import br.com.felipe.termometro.lancamentoplanejado.domain.StatusLancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.TipoLancamentoPlanejado;
 import br.com.felipe.termometro.shared.Dinheiro;
@@ -40,6 +42,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
         ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
         RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
         UUID id = UUID.randomUUID();
         LancamentoPlanejado pendente = item(id, TipoLancamentoPlanejado.DESPESA, null, null);
         when(planejados.buscaPorId(id)).thenReturn(Optional.of(pendente));
@@ -47,7 +50,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         when(transacoes.salvaTodasDoLancamentoPlanejado(eq(id), eq("manual-planejado"), any()))
                 .thenAnswer(invocacao -> invocacao.getArgument(2));
 
-        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras).liquidar(id);
+        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras, recorrencia).liquidar(id);
 
         ArgumentCaptor<List<TransacaoBruta>> movimentos = ArgumentCaptor.forClass(List.class);
         verify(transacoes).salvaTodasDoLancamentoPlanejado(
@@ -69,6 +72,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
         ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
         RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
         UUID id = UUID.randomUUID();
         UUID origem = UUID.randomUUID();
         UUID destino = UUID.randomUUID();
@@ -80,7 +84,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         when(contas.buscaPorId(origem)).thenReturn(Optional.of(contaOrigem));
         when(contas.buscaPorId(destino)).thenReturn(Optional.of(contaDestino));
 
-        new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras).liquidar(id);
+        new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras, recorrencia).liquidar(id);
 
         ArgumentCaptor<List<TransacaoBruta>> movimentos = ArgumentCaptor.forClass(List.class);
         verify(transacoes).salvaTodasDoLancamentoPlanejado(
@@ -101,6 +105,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
         ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
         RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
         UUID id = UUID.randomUUID();
         CategoriaDoLancamento categoria = new CategoriaDoLancamento("Mercado", "ALIMENTACAO", "VARIAVEL");
         LancamentoPlanejado pendente = new LancamentoPlanejado(id, "Feira do bairro", TipoLancamentoPlanejado.DESPESA,
@@ -111,7 +116,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         when(transacoes.salvaTodasDoLancamentoPlanejado(eq(id), eq("manual-planejado"), any()))
                 .thenAnswer(invocacao -> invocacao.getArgument(2));
 
-        new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras).liquidar(id);
+        new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras, recorrencia).liquidar(id);
 
         verify(regras).aprende("FEIRA DO BAIRRO", new Categoria("Mercado", GrupoDeCategoria.ALIMENTACAO, Natureza.VARIAVEL));
         verify(processamento).processa(any());
@@ -124,6 +129,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
         ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
         RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
         UUID id = UUID.randomUUID();
         UUID contaId = UUID.randomUUID();
         LancamentoPlanejado liquidado = new LancamentoPlanejado(id, "Aluguel", TipoLancamentoPlanejado.DESPESA,
@@ -134,7 +140,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         when(planejados.salva(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
         when(contas.buscaPorId(contaId)).thenReturn(Optional.of(conta));
 
-        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras).reabrir(id);
+        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras, recorrencia).reabrir(id);
 
         verify(transacoes).ignoraMovimentosDoLancamentoPlanejado(id);
         verify(contas).salva(conta.creditar(Dinheiro.de("125.50")));
@@ -148,12 +154,13 @@ class LancamentoPlanejadoApplicationServiceTest {
         ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
         ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
         RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
         UUID id = UUID.randomUUID();
         LancamentoPlanejado liquidado = item(id, TipoLancamentoPlanejado.DESPESA, null, null).liquidar();
         LancamentoPlanejado pendente = item(id, TipoLancamentoPlanejado.DESPESA, null, null);
         when(planejados.buscaPorId(id)).thenReturn(Optional.of(liquidado), Optional.of(pendente));
         LancamentoPlanejadoApplicationService service = new LancamentoPlanejadoApplicationService(
-                planejados, transacoes, processamento, contas, regras);
+                planejados, transacoes, processamento, contas, regras, recorrencia);
 
         assertThat(service.liquidar(id)).isSameAs(liquidado);
         assertThat(service.reabrir(id)).isSameAs(pendente);
@@ -167,6 +174,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
         ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
         RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
         UUID id = UUID.randomUUID(); UUID origem = UUID.randomUUID(); UUID destino = UUID.randomUUID();
         LancamentoPlanejado liquidado = item(id, TipoLancamentoPlanejado.TRANSFERENCIA, origem, destino).liquidar();
         ContaManual contaOrigem = conta(origem, "Origem", "374.50");
@@ -176,7 +184,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         when(contas.buscaPorId(origem)).thenReturn(Optional.of(contaOrigem));
         when(contas.buscaPorId(destino)).thenReturn(Optional.of(contaDestino));
 
-        new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras).reabrir(id);
+        new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras, recorrencia).reabrir(id);
 
         verify(contas).salva(contaOrigem.creditar(Dinheiro.de("125.50")));
         verify(contas).salva(contaDestino.debitar(Dinheiro.de("125.50")));
@@ -189,12 +197,13 @@ class LancamentoPlanejadoApplicationServiceTest {
         ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
         ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
         RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
         UUID id = UUID.randomUUID();
         LancamentoPlanejado pendente = item(id, TipoLancamentoPlanejado.DESPESA, null, null);
         when(planejados.buscaPorId(id)).thenReturn(Optional.of(pendente));
         when(planejados.salva(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras).cancelar(id);
+        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras, recorrencia).cancelar(id);
 
         assertThat(resultado.status()).isEqualTo(StatusLancamentoPlanejado.CANCELADO);
         verify(planejados).salva(resultado);
@@ -207,6 +216,7 @@ class LancamentoPlanejadoApplicationServiceTest {
         ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
         ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
         RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
         UUID id = UUID.randomUUID(); UUID contaId = UUID.randomUUID();
         LancamentoPlanejado existente = item(id, TipoLancamentoPlanejado.DESPESA, contaId, null);
         LancamentoPlanejado edicao = new LancamentoPlanejado(id, "Aluguel revisado", TipoLancamentoPlanejado.DESPESA,
@@ -214,11 +224,38 @@ class LancamentoPlanejadoApplicationServiceTest {
         when(planejados.buscaPorId(id)).thenReturn(Optional.of(existente));
         when(planejados.salva(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras).edita(edicao);
+        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(planejados, transacoes, processamento, contas, regras, recorrencia).edita(edicao);
 
         assertThat(resultado.descricao()).isEqualTo("Aluguel revisado");
         assertThat(resultado.status()).isEqualTo(StatusLancamentoPlanejado.PENDENTE);
         assertThat(resultado.contaOrigemId()).isEqualTo(contaId);
+    }
+
+    @Test
+    void marcarLancamentoQueJaExistiaComoRecorrenteCriaASerie() {
+        LancamentoPlanejadoRepository planejados = Mockito.mock(LancamentoPlanejadoRepository.class);
+        TransacaoRepository transacoes = Mockito.mock(TransacaoRepository.class);
+        ImportacaoProcessadaService processamento = Mockito.mock(ImportacaoProcessadaService.class);
+        ContaManualRepository contas = Mockito.mock(ContaManualRepository.class);
+        RegraDeCategorizacaoRepository regras = Mockito.mock(RegraDeCategorizacaoRepository.class);
+        RecorrenciaLancamentoService recorrencia = Mockito.mock(RecorrenciaLancamentoService.class);
+        UUID id = UUID.randomUUID();
+        LancamentoPlanejado existente = item(id, TipoLancamentoPlanejado.DESPESA, null, null);
+        LancamentoPlanejado edicaoComDia = new LancamentoPlanejado(id, "Aluguel", TipoLancamentoPlanejado.DESPESA,
+                Dinheiro.de("2200"), LocalDate.of(2026, 9, 10), StatusLancamentoPlanejado.PENDENTE,
+                null, null, null, null, null, MarcacaoPlanejamento.CUSTO_FIXO, null, null, 10);
+        when(planejados.buscaPorId(id)).thenReturn(Optional.of(existente));
+        when(recorrencia.criaSerie(any(), eq(10))).thenAnswer(invocacao ->
+                ((LancamentoPlanejado) invocacao.getArgument(0)).comRecorrencia(UUID.randomUUID(), 10));
+
+        LancamentoPlanejado resultado = new LancamentoPlanejadoApplicationService(
+                planejados, transacoes, processamento, contas, regras, recorrencia).edita(edicaoComDia);
+
+        // sem isto, marcar "recorrente" num lançamento já existente só gravava o dia e nunca
+        // gerava os meses seguintes — a série tem que nascer aqui também, não só na criação
+        verify(recorrencia).criaSerie(any(), eq(10));
+        assertThat(resultado.serieId()).isNotNull();
+        verifyNoInteractions(transacoes);
     }
 
     private static LancamentoPlanejado item(UUID id, TipoLancamentoPlanejado tipo, UUID origem, UUID destino) {

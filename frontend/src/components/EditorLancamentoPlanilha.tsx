@@ -1,8 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { postLancamentoNaPlanilha, putLancamentoNaPlanilha } from "../api";
 import { CATEGORIAS_LANCAMENTO } from "../categorias";
-import { normalizarDecimal } from "../format";
-import type { LancamentoDaPlanilhaRequest, LancamentoDaPlanilhaResponse, MarcacaoPlanejamento, OrigemReceita } from "../types";
+import { formatarEntradaDeDinheiro, valorDaEntradaDeDinheiro } from "../format";
+import type { EscopoEdicaoRecorrencia, LancamentoDaPlanilhaRequest, LancamentoDaPlanilhaResponse, MarcacaoPlanejamento, OrigemReceita } from "../types";
+import { CampoRecorrencia } from "./CampoRecorrencia";
+import { EscolhaEscopoRecorrencia } from "./EscolhaEscopoRecorrencia";
 
 const ORIGENS: { valor: OrigemReceita; rotulo: string }[] = [
   { valor: "SALARIO", rotulo: "Salário" },
@@ -23,18 +25,25 @@ export function EditorLancamentoPlanilha({
 }) {
   const [tipo, setTipo] = useState<"ENTRADA" | "SAIDA">(item?.tipo ?? "SAIDA");
   const [descricao, setDescricao] = useState(item?.descricao ?? "");
-  const [valor, setValor] = useState(item?.valor.replace(".", ",") ?? "");
+  const [valor, setValor] = useState(item ? formatarEntradaDeDinheiro(String(Math.round(Number(item.valor) * 100))) : formatarEntradaDeDinheiro("0"));
+  const valorRef = useRef<HTMLInputElement>(null);
+  function alteraValor(bruto: string) { const proximo = formatarEntradaDeDinheiro(bruto); setValor(proximo); requestAnimationFrame(() => valorRef.current?.setSelectionRange(proximo.length, proximo.length)); }
   const [categoria, setCategoria] = useState(item?.categoria ?? "");
   const [origemReceita, setOrigemReceita] = useState<OrigemReceita | "">(item?.origemReceita ?? "");
   const [marcacao, setMarcacao] = useState<MarcacaoPlanejamento>(item?.marcacaoPlanejamento ?? "NENHUMA");
+  const jaEhSerie = Boolean(item?.diaRecorrencia);
+  const [recorrente, setRecorrente] = useState(jaEhSerie);
+  const [diaRecorrencia, setDiaRecorrencia] = useState(item?.diaRecorrencia ?? Number(data.slice(-2)));
+  const [perguntandoEscopo, setPerguntandoEscopo] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const pendente = useRef<LancamentoDaPlanilhaRequest | null>(null);
 
-  async function salvar(evento: FormEvent) {
+  function salvar(evento: FormEvent) {
     evento.preventDefault();
-    const decimal = normalizarDecimal(valor);
+    const numero = valorDaEntradaDeDinheiro(valor);
     const categoriaEscolhida = CATEGORIAS_LANCAMENTO.find((opcao) => opcao.nome === categoria);
-    if (!decimal || Number(decimal) <= 0) {
+    if (numero === null) {
       setErro("Informe um valor maior que zero.");
       return;
     }
@@ -49,18 +58,30 @@ export function EditorLancamentoPlanilha({
     const request: LancamentoDaPlanilhaRequest = {
       descricao: descricao.trim(),
       tipo,
-      valor: Number(decimal),
+      valor: numero,
       categoria: tipo === "SAIDA" ? categoriaEscolhida?.nome : null,
       grupoCategoria: tipo === "SAIDA" ? categoriaEscolhida?.grupo : null,
       naturezaCategoria: tipo === "SAIDA" ? (item?.naturezaCategoria ?? "VARIAVEL") : null,
       origemReceita: tipo === "ENTRADA" ? origemReceita || null : null,
       marcacaoPlanejamento: marcacao,
+      diaRecorrencia: recorrente ? diaRecorrencia : null,
     };
+    if (jaEhSerie) {
+      pendente.current = request;
+      setPerguntandoEscopo(true);
+      return;
+    }
+    efetivaSalvar(request, "ESTA");
+  }
+
+  async function efetivaSalvar(request: LancamentoDaPlanilhaRequest, escopo: EscopoEdicaoRecorrencia) {
+    setPerguntandoEscopo(false);
     setSalvando(true);
     setErro(null);
     try {
-      if (item?.id) await putLancamentoNaPlanilha(data, item.id, request);
-      else await postLancamentoNaPlanilha(data, request);
+      const corpo = { ...request, escopoEdicao: escopo };
+      if (item?.id) await putLancamentoNaPlanilha(data, item.id, corpo);
+      else await postLancamentoNaPlanilha(data, corpo);
       aoSalvar();
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : "Não foi possível salvar o lançamento.");
@@ -84,7 +105,7 @@ export function EditorLancamentoPlanilha({
       </div>
       <div className="form__campo">
         <label htmlFor="planilha-valor">Valor</label>
-        <input id="planilha-valor" inputMode="decimal" placeholder="0,00" value={valor} onChange={(evento) => setValor(evento.target.value)} required />
+        <input ref={valorRef} id="planilha-valor" inputMode="numeric" value={valor} onFocus={(evento) => evento.currentTarget.setSelectionRange(evento.currentTarget.value.length, evento.currentTarget.value.length)} onClick={(evento) => evento.currentTarget.setSelectionRange(evento.currentTarget.value.length, evento.currentTarget.value.length)} onChange={(evento) => alteraValor(evento.target.value)} placeholder="R$ 0,00" required />
       </div>
       {tipo === "SAIDA" ? (
         <><div className="form__campo">
@@ -103,11 +124,25 @@ export function EditorLancamentoPlanilha({
           </select>
         </div><div className="form__campo"><label htmlFor="planilha-recorrencia-receita">Recorrência</label><select id="planilha-recorrencia-receita" value={marcacao} onChange={(evento) => setMarcacao(evento.target.value as MarcacaoPlanejamento)}><option value="NENHUMA">Entrada pontual</option><option value="RECEITA_RECORRENTE">Receita recorrente</option></select></div></>
       )}
+      <CampoRecorrencia
+        recorrente={recorrente}
+        dia={diaRecorrencia}
+        jaEhSerie={jaEhSerie}
+        onChangeRecorrente={setRecorrente}
+        onChangeDia={setDiaRecorrencia}
+      />
       {erro && <p className="form__erro" role="alert">{erro}</p>}
-      <div className="form__acoes">
-        <button type="submit" disabled={salvando}>{salvando ? "Salvando..." : item ? "Salvar alteração" : "Adicionar ao dia"}</button>
-        <button type="button" className="botao--secundario" onClick={aoCancelar}>Cancelar</button>
-      </div>
+      {perguntandoEscopo && pendente.current ? (
+        <EscolhaEscopoRecorrencia
+          onEscolher={(escopo) => efetivaSalvar(pendente.current!, escopo)}
+          onCancelar={() => setPerguntandoEscopo(false)}
+        />
+      ) : (
+        <div className="form__acoes">
+          <button type="submit" disabled={salvando}>{salvando ? "Salvando..." : item ? "Salvar alteração" : "Adicionar ao dia"}</button>
+          <button type="button" className="botao--secundario" onClick={aoCancelar}>Cancelar</button>
+        </div>
+      )}
     </form>
   );
 }

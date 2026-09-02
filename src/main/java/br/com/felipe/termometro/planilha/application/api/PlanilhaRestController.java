@@ -60,7 +60,7 @@ public class PlanilhaRestController implements PlanilhaAPI {
 
     @Override
     public void editaLancamento(LocalDate data, UUID id, LancamentoDaPlanilhaRequest request) {
-        planilhaService.editaLancamento(request.paraDominio(id, data));
+        planilhaService.editaLancamento(request.paraDominio(id, data), request.escopo());
     }
 
     @Override

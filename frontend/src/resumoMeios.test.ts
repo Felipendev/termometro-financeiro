@@ -8,7 +8,7 @@ function item(parcial: Partial<LancamentoPlanejadoResponse>): LancamentoPlanejad
     vencimento: "2026-08-20", status: "LIQUIDADO", contaOrigemId: null,
     contaDestinoId: null, categoria: null, cartaoManualId: null, transacaoId: null,
     marcacaoPlanejamento: "NENHUMA", contaOuCartao: null, editavel: true, origem: "MANUAL",
-    origemReceita: null,
+    origemReceita: null, serieId: null, diaRecorrencia: null,
     ...parcial,
   };
 }

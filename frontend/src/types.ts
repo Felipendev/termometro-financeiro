@@ -236,8 +236,9 @@ export interface ContaManualResponse { id: string; identificador: string; nome: 
 export interface CategoriaDoLancamentoResponse { nome: string; grupo: string; natureza: string; }
 export type MarcacaoPlanejamento = "NENHUMA" | "CUSTO_FIXO" | "PISO_HUMANO" | "RECEITA_RECORRENTE";
 export type OrigemReceita = "SALARIO" | "INVESTIMENTO" | "EMPRESTIMO";
-export interface LancamentoPlanejadoResponse { id: string; descricao: string; tipo: "DESPESA" | "RECEITA" | "TRANSFERENCIA"; valor: DinheiroStr; vencimento: string; status: string; contaOrigemId: string | null; contaDestinoId: string | null; categoria: CategoriaDoLancamentoResponse | null; cartaoManualId: string | null; transacaoId: string | null; marcacaoPlanejamento: MarcacaoPlanejamento; contaOuCartao: string | null; editavel: boolean; origem: string; origemReceita: OrigemReceita | null; }
-export interface LancamentoPlanejadoRequest { descricao: string; tipo: "DESPESA" | "RECEITA" | "TRANSFERENCIA"; valor: number; vencimento: string; contaOrigemId?: string | null; contaDestinoId?: string | null; categoria?: string | null; grupoCategoria?: string | null; naturezaCategoria?: string | null; cartaoManualId?: string | null; marcacaoPlanejamento?: MarcacaoPlanejamento; origemReceita?: OrigemReceita | null; }
+export type EscopoEdicaoRecorrencia = "ESTA" | "ESTA_E_FUTURAS";
+export interface LancamentoPlanejadoResponse { id: string; descricao: string; tipo: "DESPESA" | "RECEITA" | "TRANSFERENCIA"; valor: DinheiroStr; vencimento: string; status: string; contaOrigemId: string | null; contaDestinoId: string | null; categoria: CategoriaDoLancamentoResponse | null; cartaoManualId: string | null; transacaoId: string | null; marcacaoPlanejamento: MarcacaoPlanejamento; contaOuCartao: string | null; editavel: boolean; origem: string; origemReceita: OrigemReceita | null; serieId: string | null; diaRecorrencia: number | null; }
+export interface LancamentoPlanejadoRequest { descricao: string; tipo: "DESPESA" | "RECEITA" | "TRANSFERENCIA"; valor: number; vencimento: string; contaOrigemId?: string | null; contaDestinoId?: string | null; categoria?: string | null; grupoCategoria?: string | null; naturezaCategoria?: string | null; cartaoManualId?: string | null; marcacaoPlanejamento?: MarcacaoPlanejamento; origemReceita?: OrigemReceita | null; diaRecorrencia?: number | null; escopoEdicao?: EscopoEdicaoRecorrencia; }
 export interface ConsultaLancamentosResponse {
   itens: LancamentoPlanejadoResponse[];
   totalDeItens: number;
@@ -264,6 +265,7 @@ export interface LancamentoDaPlanilhaResponse {
   naturezaCategoria: string | null;
   origemReceita: OrigemReceita | null;
   marcacaoPlanejamento: MarcacaoPlanejamento | null;
+  diaRecorrencia: number | null;
 }
 export interface LancamentoDaPlanilhaRequest {
   descricao: string;
@@ -274,6 +276,8 @@ export interface LancamentoDaPlanilhaRequest {
   naturezaCategoria?: string | null;
   origemReceita?: OrigemReceita | null;
   marcacaoPlanejamento?: MarcacaoPlanejamento | null;
+  diaRecorrencia?: number | null;
+  escopoEdicao?: EscopoEdicaoRecorrencia;
 }
 export interface DiaDaPlanilhaResponse { data: string; entrada: DinheiroStr; saida: DinheiroStr; diario: DinheiroStr; diarioSobrescrito: boolean; saldo: DinheiroStr; faixaSaldo: string; lancamentos: LancamentoDaPlanilhaResponse[]; observacao: string | null; }
 export interface PlanilhaMesResponse { competencia: string; dias: DiaDaPlanilhaResponse[]; totalEntrada: DinheiroStr; totalSaida: DinheiroStr; totalDiario: DinheiroStr; saldoFinal: DinheiroStr; totalDeficitDisfarcado: DinheiroStr; transacoesEmAtencao: number; }

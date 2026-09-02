@@ -11,6 +11,7 @@ import br.com.felipe.termometro.cartao.fatura.application.api.request.PagamentoF
 import br.com.felipe.termometro.cartao.fatura.application.repository.FaturaDeclaradaRepository;
 import br.com.felipe.termometro.cartao.fatura.application.repository.PagamentoFaturaRepository;
 import br.com.felipe.termometro.cartao.fatura.domain.PagamentoFatura;
+import br.com.felipe.termometro.ingestao.application.api.response.CartaoResponse;
 import br.com.felipe.termometro.ingestao.application.api.response.ResumoCartoesResponse;
 import br.com.felipe.termometro.ingestao.application.service.CartaoService;
 import br.com.felipe.termometro.lancamentoplanejado.application.service.LancamentoPlanejadoApplicationService;
@@ -61,7 +62,7 @@ class FaturaCartaoApplicationServiceTest {
     }
 
     @Test
-    void pagamentoParcialCriaSaidaNaoGastoEApareceNoSaldoDaFatura() {
+    void pagamentoParcialCriaSaidaFixaEApareceNoSaldoDaFatura() {
         AtomicReference<LancamentoPlanejado> criado = new AtomicReference<>();
         when(lancamentos.salva(any())).thenAnswer(invocacao -> {
             LancamentoPlanejado item = invocacao.getArgument(0);
@@ -76,8 +77,32 @@ class FaturaCartaoApplicationServiceTest {
         assertThat(resposta.status()).isEqualTo("PARCIAL");
         assertThat(resposta.valorPago()).isEqualTo(Dinheiro.de("450"));
         assertThat(resposta.saldoAberto()).isEqualTo(Dinheiro.de("750"));
-        assertThat(criado.get().categoria().natureza()).isEqualTo("NAO_E_GASTO");
+        // Fatura DECLARADA (sem compra individual importada): o pagamento É o único registro do
+        // gasto, então conta como despesa real (FIXO) — diferente de fatura IMPORTADA, onde cada
+        // compra já foi lançada e o pagamento vira NAO_E_GASTO pra não contar duas vezes (RN-03).
+        assertThat(criado.get().categoria().natureza()).isEqualTo("FIXO");
         assertThat(criado.get().descricao()).isEqualTo("Pagamento de fatura - Nubank");
         verify(lancamentos).liquidar(criado.get().id());
+    }
+
+    @Test
+    void pagamentoDeFaturaImportadaContinuaNaoGasto() {
+        when(cartaoImportadoService.consultaCartoes(SETEMBRO)).thenReturn(
+                ResumoCartoesResponse.de(List.of(new CartaoResponse(
+                        "pluggy:nubank", "Nubank", null, Dinheiro.de("500"), null))));
+        AtomicReference<LancamentoPlanejado> criado = new AtomicReference<>();
+        when(lancamentos.salva(any())).thenAnswer(invocacao -> {
+            LancamentoPlanejado item = invocacao.getArgument(0);
+            criado.set(item);
+            return item;
+        });
+        when(lancamentos.liquidar(any())).thenAnswer(invocacao -> criado.get().liquidar());
+
+        service.paga(SETEMBRO, new PagamentoFaturaRequest(
+                "IMPORTADO:pluggy:nubank", new BigDecimal("450.00"), LocalDate.of(2026, 9, 10), null));
+
+        // Cada compra da fatura importada já virou lançamento próprio — contar o pagamento de
+        // novo seria contar duas vezes (RN-03), então aqui a natureza continua NAO_E_GASTO.
+        assertThat(criado.get().categoria().natureza()).isEqualTo("NAO_E_GASTO");
     }
 }

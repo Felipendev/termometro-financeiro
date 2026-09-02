@@ -82,12 +82,19 @@ public class FaturaCartaoApplicationService {
                     "O pagamento não pode ultrapassar o saldo aberto da fatura.");
         }
 
+        // Fatura IMPORTADA: cada compra já foi lançada/importada individualmente, então o
+        // pagamento é NAO_E_GASTO (RN-03) — contar de novo aqui seria contar duas vezes.
+        // Fatura DECLARADA: o usuário só digita o total, nenhuma compra existe como lançamento
+        // à parte — o pagamento É a única representação do gasto, então precisa contar (FIXO,
+        // pra não distorcer a verba diária com um valor agregado de uma tacada só).
+        boolean importada = "IMPORTACAO".equals(fatura.origem());
         UUID lancamentoId = UUID.randomUUID();
         LancamentoPlanejado saida = new LancamentoPlanejado(lancamentoId,
                 "Pagamento de fatura - " + fatura.nome(), TipoLancamentoPlanejado.DESPESA,
                 valor, request.dataPagamento(), StatusLancamentoPlanejado.PENDENTE,
                 request.contaOrigemId(), null,
-                new CategoriaDoLancamento("Pagamento de fatura", "TRANSFERENCIA", "NAO_E_GASTO"),
+                new CategoriaDoLancamento("Pagamento de fatura", "TRANSFERENCIA",
+                        importada ? "NAO_E_GASTO" : "FIXO"),
                 null, null, MarcacaoPlanejamento.NENHUMA);
         lancamentos.salva(saida);
         lancamentos.liquidar(lancamentoId);

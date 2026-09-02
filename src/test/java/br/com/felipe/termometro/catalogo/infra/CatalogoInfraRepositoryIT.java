@@ -62,6 +62,21 @@ class CatalogoInfraRepositoryIT extends BancoDeTesteIT {
     }
 
     @Test
+    @DisplayName("mês sem declaração herda a última renda declarada, em vez de vir vazio")
+    void rendaDeMesNaoDeclaradoHerdaAAnterior() {
+        // sem isso, navegar pra um mês ainda não declarado devolvia 404 ("Nenhuma renda declarada")
+        // e derrubava a visão geral inteira, mesmo com a declaração do mês anterior valendo
+        assertThat(catalogoRepository.buscaRenda(SETEMBRO.proxima()))
+                .hasValueSatisfying(renda -> assertThat(renda.valorLiquido()).isEqualTo(Dinheiro.de(10000)));
+    }
+
+    @Test
+    @DisplayName("antes de qualquer declaração continua vazio — 404 legítimo")
+    void rendaAntesDaPrimeiraDeclaracaoContinuaVazia() {
+        assertThat(catalogoRepository.buscaRenda(Competencia.de(2000, 1))).isEmpty();
+    }
+
+    @Test
     @DisplayName("histórico de renda tem só 1 mês hoje — RN-16.1 não tem base pra disparar")
     void historicoDeRendaAindaEhCurto() {
         List<Renda> historico = catalogoRepository.buscaHistoricoDeRenda(SETEMBRO, 6);

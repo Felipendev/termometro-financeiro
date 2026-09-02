@@ -1,5 +1,5 @@
-import { ArrowDownCircle, ArrowUpCircle, BarChart3, HeartHandshake, Landmark, Repeat2 } from "lucide-react";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { ArrowDownCircle, ArrowUpCircle, BarChart3, Landmark, Repeat2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { buscaRollupAnual, buscaTodosLancamentos } from "../api";
 import { IconeCategoria } from "../components/IconeCategoria";
 import { Banner } from "../components/Banner";
@@ -15,6 +15,8 @@ import { formatarDespesa, formatarDinheiro, formatarPercentual, somarDinheiro } 
 import type { ContaManualResponse, DashboardResponse, LancamentoPlanejadoResponse, MesDoRollupResponse } from "../types";
 import { combinaCategorias } from "../resumoCategorias";
 import { resumirFluxoDoMes, resumirMovimentosPorMeio } from "../resumoMeios";
+import { GraficoRosca, type SegmentoRosca } from "../components/GraficoRosca";
+import { ListaLancamentos } from "../components/ListaLancamentos";
 
 const CORES = ["#7b8ff5", "#ff927b", "#53ad86", "#e0b04f", "#a876d8", "#57a7d8"];
 type AbaRelatorio = "categorias" | "fluxo" | "contas" | "cartoes" | "planejamento" | "anual";
@@ -29,14 +31,15 @@ const ABAS: { id: AbaRelatorio; rotulo: string }[] = [
   { id: "anual", rotulo: "Anual" },
 ];
 
-function fatiasDoGrafico(valores: string[], base: number) {
-  return valores.slice(0, 6).reduce(
-    (estado, valor, indice) => {
-      const fim = estado.fim + (Number(valor) / base) * 100;
-      return { fim, fatias: [...estado.fatias, `${CORES[indice]} ${estado.fim.toFixed(2)}% ${fim.toFixed(2)}%`] };
+function segmentosDoGrafico(itens: { nome: string; total: string }[], base: number) {
+  return itens.slice(0, 6).reduce<{ fim: number; segmentos: SegmentoRosca[] }>(
+    (estado, { nome, total }, indice) => {
+      const fim = estado.fim + (Number(total) / base) * 100;
+      const percentual = (Number(total) / base) * 100;
+      return { fim, segmentos: [...estado.segmentos, { nome, inicio: estado.fim, fim, percentual, cor: CORES[indice] }] };
     },
-    { fim: 0, fatias: [] as string[] },
-  ).fatias;
+    { fim: 0, segmentos: [] },
+  ).segmentos;
 }
 
 export function Relatorios({ dashboard, pendencias, contas, abaInicial, marcacaoInicial, cartaoInicial, aoAlterar }: {
@@ -60,8 +63,7 @@ export function Relatorios({ dashboard, pendencias, contas, abaInicial, marcacao
   const categorias = filtroCategoria ? todasCategorias.filter((item) => item.nome === filtroCategoria) : todasCategorias;
   const total = somarDinheiro(categorias.map((item) => item.total));
   const base = Math.max(Number(total), 1);
-  const fatias = fatiasDoGrafico(categorias.map((item) => item.total), base);
-  const estilo = { "--fatias": fatias.length ? fatias.join(", ") : "#e7ebe6 0 100%" } as CSSProperties;
+  const segmentosCategorias = segmentosDoGrafico(categorias, base);
   const cartoesImportados = dashboard.euDoPresente.cartoes.cartoes;
   const cartoesManuais = dashboard.euDoPresente.cartoesManuais;
   const resumoMeios = useMemo(() => resumirMovimentosPorMeio(
@@ -71,6 +73,11 @@ export function Relatorios({ dashboard, pendencias, contas, abaInicial, marcacao
     cartoesImportados.map((cartao) => cartao.nome),
   ), [cartoesImportados, cartoesManuais, contas, movimentos]);
   const fluxoDoMes = useMemo(() => resumirFluxoDoMes(movimentos), [movimentos]);
+  const movimentosDoFluxo = useMemo(
+    () => movimentos.filter((item) => item.tipo !== "TRANSFERENCIA" && item.status !== "CANCELADO")
+      .sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
+    [movimentos],
+  );
   const itensSustentacao = movimentos.filter((item) => item.marcacaoPlanejamento === filtroSustentacao && item.status !== "CANCELADO");
   const itensDaCategoria = movimentos.filter((item) => item.tipo === "DESPESA" && item.status !== "CANCELADO"
     && item.categoria?.nome.localeCompare(categoriaAberta ?? "", "pt-BR", { sensitivity: "base" }) === 0);
@@ -111,13 +118,12 @@ export function Relatorios({ dashboard, pendencias, contas, abaInicial, marcacao
       {aba === "categorias" && <div id="painel-categorias" role="tabpanel">
         <div className="relatorios__premissas" aria-label="Premissas do mês">
           <button type="button" className={filtroSustentacao === "CUSTO_FIXO" ? "selecionado" : ""} onClick={() => setFiltroSustentacao((atual) => atual === "CUSTO_FIXO" ? null : "CUSTO_FIXO")}><Repeat2 size={18} /><span>Custo fixo</span><strong>{formatarDespesa(dashboard.viabilidade.custoFixoTotal)}</strong></button>
-          <button type="button" className={filtroSustentacao === "PISO_HUMANO" ? "selecionado" : ""} onClick={() => setFiltroSustentacao((atual) => atual === "PISO_HUMANO" ? null : "PISO_HUMANO")}><HeartHandshake size={18} /><span>Piso humano</span><strong>{formatarDespesa(dashboard.viabilidade.pisoVariavelTotal)}</strong></button>
-          <p>Estes totais vêm das despesas marcadas no lançamento; o cadastro antigo é usado apenas enquanto o mês ainda não possuir marcações.</p>
+          <p>Este total vem das despesas marcadas no lançamento; o cadastro antigo é usado apenas enquanto o mês ainda não possuir marcações.</p>
         </div>
         {filtroSustentacao && <section className="relatorios__sustentacao-detalhe" aria-live="polite"><div><h3>{filtroSustentacao === "CUSTO_FIXO" ? "Despesas recorrentes do mês" : "Despesas do piso humano"}</h3><button type="button" className="link-painel" onClick={() => setFiltroSustentacao(null)}>Fechar</button></div>{itensSustentacao.length === 0 ? <p className="vazio">Nenhum lançamento real marcado neste mês; o total exibido ainda vem do catálogo antigo.</p> : <ul>{itensSustentacao.map((item) => <li key={item.id}><span><strong>{item.descricao}</strong><small>{item.categoria?.nome ?? "Sem categoria"} · {item.vencimento}</small></span><b>{formatarDespesa(item.valor)}</b></li>)}</ul>}</section>}
         {categorias.length === 0 ? <div className="estado-vazio estado-vazio--alto"><BarChart3 size={28} /><strong>Nenhuma despesa classificada neste mês</strong><p>Crie ou importe lançamentos e escolha suas categorias para montar o relatório.</p></div> : <div className="relatorio-categorias">
           <div className="relatorio-categorias__lista"><p className="relatorio-categorias__rotulo">Despesas</p>{categorias.map(({ nome, total: valor }, indice) => <button type="button" className={`relatorio-categoria ${categoriaAberta === nome ? "relatorio-categoria--ativa" : ""}`} aria-expanded={categoriaAberta === nome} onClick={() => setCategoriaAberta((atual) => atual === nome ? null : nome)} key={nome}><IconeCategoria nome={nome} cor={CORES[indice % CORES.length]} /><span>{nome}</span><div><strong>{formatarDespesa(valor)}</strong><small>{((Number(valor) / base) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</small></div></button>)}<div className="relatorio-categorias__total"><span>Total</span><strong>{formatarDespesa(total)}</strong></div></div>
-          <div className="relatorio-categorias__visual"><p>Gastos classificados no mês</p><div className="grafico-rosca grafico-rosca--grande" style={estilo}><span>{categorias.length}</span><small>categorias</small></div></div>
+          <div className="relatorio-categorias__visual"><p>Gastos classificados no mês</p><GraficoRosca segmentos={segmentosCategorias} tamanho={225} grande furoRaio={43} centro={<><span>{categorias.length}</span><small>categorias</small></>} /></div>
         </div>}
         {categoriaAberta && <section className="relatorio-categoria-detalhe"><div><div><p className="eyebrow">Incluído em {categoriaAberta}</p><h3>Valores específicos do mês</h3></div><button type="button" className="link-painel" onClick={() => setCategoriaAberta(null)}>Fechar</button></div>{itensDaCategoria.length === 0 ? <p className="vazio">Não há itens detalháveis; atualize a análise para sincronizar as categorias importadas.</p> : <ul>{itensDaCategoria.map((item) => <li key={item.id}><span><strong>{item.descricao}</strong><small>{item.vencimento} · {item.origem}</small></span><b>{formatarDespesa(item.valor)}</b></li>)}</ul>}</section>}
       </div>}
@@ -128,6 +134,11 @@ export function Relatorios({ dashboard, pendencias, contas, abaInicial, marcacao
         <div className="relatorio-indicador relatorio-indicador--despesa"><ArrowDownCircle size={22} /><span>Despesas do mês</span><strong>{formatarDespesa(fluxoDoMes.despesas)}</strong></div>
         <div className="relatorio-indicador"><BarChart3 size={22} /><span>Saldo do mês</span><strong className={Number(fluxoDoMes.saldo) < 0 ? "valor--despesa" : "valor--receita"}>{formatarDinheiro(fluxoDoMes.saldo)}</strong></div>
         <p className="relatorio-painel__nota">Transferências entre contas e lançamentos cancelados ficam fora das entradas e saídas.</p>
+        {movimentosDoFluxo.length === 0 ? (
+          <p className="vazio">Nenhum lançamento neste mês.</p>
+        ) : (
+          <ListaLancamentos itens={movimentosDoFluxo} />
+        )}
       </div>}
 
       {aba === "contas" && <div id="painel-contas" role="tabpanel" className="relatorio-painel relatorio-lista">
@@ -147,7 +158,7 @@ export function Relatorios({ dashboard, pendencias, contas, abaInicial, marcacao
 
       {aba === "planejamento" && <div id="painel-planejamento" role="tabpanel" className="relatorio-planejamento">
         <Banner viabilidade={dashboard.viabilidade} />
-        <PainelOperacional contas={contas} pendencias={pendencias} />
+        <PainelOperacional contas={contas} pendencias={pendencias} competencia={dashboard.competencia} />
         <main className="colunas colunas--planejamento">
           <ColunaPassado dados={dashboard.euDoPassado} />
           <ColunaPresente dados={dashboard.euDoPresente} />

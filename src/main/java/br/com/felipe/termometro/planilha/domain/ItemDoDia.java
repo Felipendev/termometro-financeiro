@@ -28,15 +28,16 @@ public record ItemDoDia(
         @Nullable String grupoCategoria,
         @Nullable String naturezaCategoria,
         @Nullable String origemReceita,
-        @Nullable String marcacaoPlanejamento) {
+        @Nullable String marcacaoPlanejamento,
+        @Nullable Integer diaRecorrencia) {
 
     public ItemDoDia(String descricao, Dinheiro valor, TipoItemDoDia tipo, String origem) {
-        this(descricao, valor, tipo, origem, null, null, false, null, null, null, null, null);
+        this(descricao, valor, tipo, origem, null, null, false, null, null, null, null, null, null);
     }
 
     public ItemDoDia(String descricao, Dinheiro valor, TipoItemDoDia tipo, String origem,
             @Nullable UsoDeCredito usoDeCredito) {
-        this(descricao, valor, tipo, origem, usoDeCredito, null, false, null, null, null, null, null);
+        this(descricao, valor, tipo, origem, usoDeCredito, null, false, null, null, null, null, null, null);
     }
 
     public ItemDoDia {
@@ -51,7 +52,8 @@ public record ItemDoDia(
 
     public ItemDoDia comUsoDeCredito(UsoDeCredito novoUsoDeCredito) {
         return new ItemDoDia(descricao, valor, tipo, origem, novoUsoDeCredito, id, editavel,
-                categoria, grupoCategoria, naturezaCategoria, origemReceita, marcacaoPlanejamento);
+                categoria, grupoCategoria, naturezaCategoria, origemReceita, marcacaoPlanejamento,
+                diaRecorrencia);
     }
 
     public boolean vemDeCartao() {

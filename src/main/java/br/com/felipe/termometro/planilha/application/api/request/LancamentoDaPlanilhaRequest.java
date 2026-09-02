@@ -1,12 +1,15 @@
 package br.com.felipe.termometro.planilha.application.api.request;
 
 import br.com.felipe.termometro.lancamentoplanejado.domain.CategoriaDoLancamento;
+import br.com.felipe.termometro.lancamentoplanejado.domain.EscopoEdicaoRecorrencia;
 import br.com.felipe.termometro.lancamentoplanejado.domain.LancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.MarcacaoPlanejamento;
 import br.com.felipe.termometro.lancamentoplanejado.domain.OrigemReceita;
 import br.com.felipe.termometro.lancamentoplanejado.domain.StatusLancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.TipoLancamentoPlanejado;
 import br.com.felipe.termometro.shared.Dinheiro;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -23,11 +26,21 @@ public record LancamentoDaPlanilhaRequest(
         String grupoCategoria,
         String naturezaCategoria,
         String origemReceita,
-        String marcacaoPlanejamento) {
+        String marcacaoPlanejamento,
+        @Min(1) @Max(31) Integer diaRecorrencia,
+        String escopoEdicao) {
 
     public LancamentoDaPlanilhaRequest(String descricao, String tipo, BigDecimal valor,
             String categoria, String grupoCategoria, String naturezaCategoria, String origemReceita) {
-        this(descricao, tipo, valor, categoria, grupoCategoria, naturezaCategoria, origemReceita, null);
+        this(descricao, tipo, valor, categoria, grupoCategoria, naturezaCategoria, origemReceita,
+                null, null, null);
+    }
+
+    public LancamentoDaPlanilhaRequest(String descricao, String tipo, BigDecimal valor,
+            String categoria, String grupoCategoria, String naturezaCategoria, String origemReceita,
+            String marcacaoPlanejamento) {
+        this(descricao, tipo, valor, categoria, grupoCategoria, naturezaCategoria, origemReceita,
+                marcacaoPlanejamento, null, null);
     }
 
     public LancamentoPlanejado paraDominio(UUID id, LocalDate data) {
@@ -40,7 +53,12 @@ public record LancamentoDaPlanilhaRequest(
                 id, descricao.trim(), tipoDominio, Dinheiro.de(valor), data,
                 StatusLancamentoPlanejado.PENDENTE, null, null,
                 categoria(tipoDominio), null, null, marcacao(tipoDominio),
-                origemReceita(tipoDominio));
+                origemReceita(tipoDominio), null, diaRecorrencia);
+    }
+
+    public EscopoEdicaoRecorrencia escopo() {
+        return escopoEdicao == null || escopoEdicao.isBlank()
+                ? EscopoEdicaoRecorrencia.ESTA : EscopoEdicaoRecorrencia.valueOf(escopoEdicao);
     }
 
     private MarcacaoPlanejamento marcacao(TipoLancamentoPlanejado tipoDominio) {

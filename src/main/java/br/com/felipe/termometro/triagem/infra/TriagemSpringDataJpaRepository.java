@@ -21,6 +21,7 @@ interface TriagemSpringDataJpaRepository extends Repository<TransacaoJpaEntity, 
              where t.data between :primeiroDia and :ultimoDia
                and t.categoria is not null
                and t.ignorada = false
+               and t.valor < 0
              order by t.data
             """)
     List<TransacaoJpaEntity> buscaClassificadasDoMes(@Param("primeiroDia") LocalDate primeiroDia,

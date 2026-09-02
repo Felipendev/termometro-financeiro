@@ -3,9 +3,13 @@ import type { ContaManualResponse, LancamentoPlanejadoResponse } from "../types"
 import { CalendarClock, Landmark, TrendingUp } from "lucide-react";
 import { IconeCategoria } from "./IconeCategoria";
 
-export function PainelOperacional({ contas, pendencias }: { contas: ContaManualResponse[]; pendencias: LancamentoPlanejadoResponse[] }) {
-  const pagar = pendencias.filter((item) => item.tipo === "DESPESA");
-  const receber = pendencias.filter((item) => item.tipo === "RECEITA");
+export function PainelOperacional({ contas, pendencias, competencia }: { contas: ContaManualResponse[]; pendencias: LancamentoPlanejadoResponse[]; competencia: string }) {
+  // Até o fim do mês exibido: atrasado de mês anterior continua aparecendo (é o que mais importa),
+  // mas as ocorrências futuras de lançamentos recorrentes — que hoje chegam com 12 meses de
+  // antecedência — ficam de fora, senão o contador diria "11 entradas previstas" num mês com uma.
+  const doPeriodo = pendencias.filter((item) => item.vencimento.slice(0, 7) <= competencia);
+  const pagar = doPeriodo.filter((item) => item.tipo === "DESPESA");
+  const receber = doPeriodo.filter((item) => item.tipo === "RECEITA");
   return <section className="visao-grid visao-grid--operacional" aria-label="Contas e vencimentos">
     <article className="painel"><div className="painel__cabecalho"><div><p className="eyebrow">Minhas contas</p><h2>Saldo disponível</h2></div></div>
       {contas.length === 0 ? <p className="vazio">Cadastre sua primeira conta para ver o saldo consolidado.</p> : <ul className="lista-cartoes-home">{contas.map((conta) => <li key={conta.id}><span className="cartao-marca cartao-marca--conta"><Landmark size={16} /></span><div><strong>{conta.nome}</strong><small>{conta.tipo === "CORRENTE" ? "Conta manual" : "Poupança manual"}</small></div><b>{formatarDinheiro(conta.saldo)}</b></li>)}</ul>}

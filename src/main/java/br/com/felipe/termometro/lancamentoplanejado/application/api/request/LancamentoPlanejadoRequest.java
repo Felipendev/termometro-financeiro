@@ -1,12 +1,15 @@
 package br.com.felipe.termometro.lancamentoplanejado.application.api.request;
 
 import br.com.felipe.termometro.lancamentoplanejado.domain.CategoriaDoLancamento;
+import br.com.felipe.termometro.lancamentoplanejado.domain.EscopoEdicaoRecorrencia;
 import br.com.felipe.termometro.lancamentoplanejado.domain.LancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.MarcacaoPlanejamento;
 import br.com.felipe.termometro.lancamentoplanejado.domain.OrigemReceita;
 import br.com.felipe.termometro.lancamentoplanejado.domain.StatusLancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.TipoLancamentoPlanejado;
 import br.com.felipe.termometro.shared.Dinheiro;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -26,13 +29,15 @@ public record LancamentoPlanejadoRequest(
         String naturezaCategoria,
         UUID cartaoManualId,
         String marcacaoPlanejamento,
-        String origemReceita) {
+        String origemReceita,
+        @Min(1) @Max(31) Integer diaRecorrencia,
+        String escopoEdicao) {
 
     public LancamentoPlanejadoRequest(String descricao, String tipo, BigDecimal valor,
             LocalDate vencimento, UUID contaOrigemId, UUID contaDestinoId, String categoria,
             String grupoCategoria, String naturezaCategoria, UUID cartaoManualId) {
         this(descricao, tipo, valor, vencimento, contaOrigemId, contaDestinoId, categoria,
-                grupoCategoria, naturezaCategoria, cartaoManualId, null, null);
+                grupoCategoria, naturezaCategoria, cartaoManualId, null, null, null, null);
     }
 
     public LancamentoPlanejadoRequest(String descricao, String tipo, BigDecimal valor,
@@ -40,7 +45,17 @@ public record LancamentoPlanejadoRequest(
             String grupoCategoria, String naturezaCategoria, UUID cartaoManualId,
             String marcacaoPlanejamento) {
         this(descricao, tipo, valor, vencimento, contaOrigemId, contaDestinoId, categoria,
-                grupoCategoria, naturezaCategoria, cartaoManualId, marcacaoPlanejamento, null);
+                grupoCategoria, naturezaCategoria, cartaoManualId, marcacaoPlanejamento, null,
+                null, null);
+    }
+
+    public LancamentoPlanejadoRequest(String descricao, String tipo, BigDecimal valor,
+            LocalDate vencimento, UUID contaOrigemId, UUID contaDestinoId, String categoria,
+            String grupoCategoria, String naturezaCategoria, UUID cartaoManualId,
+            String marcacaoPlanejamento, String origemReceita) {
+        this(descricao, tipo, valor, vencimento, contaOrigemId, contaDestinoId, categoria,
+                grupoCategoria, naturezaCategoria, cartaoManualId, marcacaoPlanejamento,
+                origemReceita, null, null);
     }
 
     public LancamentoPlanejado paraDominio(UUID id) {
@@ -49,10 +64,18 @@ public record LancamentoPlanejadoRequest(
                 && (contaOrigemId == null || contaDestinoId == null || contaOrigemId.equals(contaDestinoId))) {
             throw new IllegalArgumentException("transferência exige contas de origem e destino diferentes");
         }
+        if (tipoDominio == TipoLancamentoPlanejado.TRANSFERENCIA && diaRecorrencia != null) {
+            throw new IllegalArgumentException("transferência não pode ser recorrente");
+        }
         return new LancamentoPlanejado(id, descricao, tipoDominio, Dinheiro.de(valor), vencimento,
                 StatusLancamentoPlanejado.PENDENTE, contaOrigemId, contaDestinoId,
                 categoriaDoLancamento(tipoDominio), cartaoManualId, null, marcacao(),
-                origemDaReceita(tipoDominio));
+                origemDaReceita(tipoDominio), null, diaRecorrencia);
+    }
+
+    public EscopoEdicaoRecorrencia escopo() {
+        return escopoEdicao == null || escopoEdicao.isBlank()
+                ? EscopoEdicaoRecorrencia.ESTA : EscopoEdicaoRecorrencia.valueOf(escopoEdicao);
     }
 
     private MarcacaoPlanejamento marcacao() {

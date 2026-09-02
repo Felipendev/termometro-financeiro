@@ -1,22 +1,10 @@
-import { Fragment, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
-import { AlertCircle, Ban, Check, CheckCircle2, HeartHandshake, Pencil, Plus, Repeat2, RotateCcw, Search, Tags, Trash2, X } from "lucide-react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { AlertCircle, Ban, Check, CheckCircle2, Plus, RotateCcw, Search, Tags, X } from "lucide-react";
 import { buscaLancamentos, deleteLancamentoPlanejado, postClassificarTransacao, postComandoLancamento } from "../api";
 import { CATEGORIAS_LANCAMENTO } from "../categorias";
-import { IconeCategoria } from "../components/IconeCategoria";
+import { ListaLancamentos } from "../components/ListaLancamentos";
 import { formatarDinheiro } from "../format";
 import type { CartaoManualResponse, ConsultaLancamentosResponse, ContaManualResponse, LancamentoPlanejadoResponse } from "../types";
-
-const ROTULOS_ORIGEM_RECEITA = {
-  SALARIO: "Salário",
-  INVESTIMENTO: "Investimento",
-  EMPRESTIMO: "Empréstimo",
-} as const;
-
-const ROTULOS_MARCACAO = {
-  CUSTO_FIXO: "Custo fixo",
-  PISO_HUMANO: "Piso humano",
-  RECEITA_RECORRENTE: "Receita recorrente",
-} as const;
 
 export function Lancamentos({ competencia, contas, cartoes, aoNovo, aoEditar, aoAlterar = async () => undefined, versao = 0 }: {
   competencia: string;
@@ -41,7 +29,6 @@ export function Lancamentos({ competencia, contas, cartoes, aoNovo, aoEditar, ao
   const textoAdiado = useDeferredValue(texto);
   const contasPorId = useMemo(() => new Map(contas.map((conta) => [conta.id, conta])), [contas]);
   const cartoesPorId = useMemo(() => new Map(cartoes.map((cartao) => [cartao.id, cartao])), [cartoes]);
-  const hojeIso = new Date().toLocaleDateString("en-CA");
 
   const carregar = useCallback((paginaAlvo = 0, acumular = false) => {
     return buscaLancamentos(competencia, {
@@ -96,18 +83,6 @@ export function Lancamentos({ competencia, contas, cartoes, aoNovo, aoEditar, ao
     return conta?.nome ?? "Sem conta vinculada";
   }
 
-  function dataLegivel(data: string) {
-    const [ano, mes, dia] = data.split("-");
-    return `${dia}/${mes}/${ano}`;
-  }
-
-  function statusLegivel(item: LancamentoPlanejadoResponse) {
-    if (item.status === "PENDENTE" && item.vencimento < hojeIso) return "Atrasado";
-    if (item.status === "LIQUIDADO") return item.tipo === "RECEITA" ? "Recebido" : "Pago";
-    if (item.status === "CANCELADO") return "Cancelado";
-    return "Pendente";
-  }
-
   return <section className="lancamentos">
     <div className="lancamentos__cabecalho">
       <div><p className="eyebrow">Histórico mensal</p><h2>Lançamentos</h2></div>
@@ -129,20 +104,19 @@ export function Lancamentos({ competencia, contas, cartoes, aoNovo, aoEditar, ao
       {dados.quantidadeAtrasados > 0 && <div className="lancamentos__alerta" role="status"><AlertCircle size={18} /><span><b>{dados.quantidadeAtrasados} {dados.quantidadeAtrasados === 1 ? "pendência vencida" : "pendências vencidas"}</b> neste período.</span></div>}
       <div className="lancamentos__totais"><span>Receitas <b>{formatarDinheiro(dados.totalReceitas)}</b></span><span>Despesas <b className="valor--despesa">-{formatarDinheiro(dados.totalDespesas)}</b></span></div>
       {dados.itens.length === 0 ? <div className="cartao vazio">Nenhum lançamento neste período. Crie um lançamento ou importe um extrato.</div> :
-        <ul className="lancamentos__lista">{dados.itens.map((item, indice) => <Fragment key={item.id}>
-          {(indice === 0 || dados.itens[indice - 1].vencimento !== item.vencimento) && <li className="lancamentos__data">{dataLegivel(item.vencimento)}</li>}
-          <li className={item.status === "PENDENTE" && item.vencimento < hojeIso ? "lancamento--atrasado" : undefined}>
-          <div className="lancamento__identidade"><IconeCategoria nome={item.categoria?.nome} /><div><span className="lancamento__titulo"><strong>{item.descricao}</strong>{item.editavel && item.status === "PENDENTE" && <><button className="botao--edicao-inline" aria-label={`Editar ${item.descricao}`} title="Editar" onClick={() => aoEditar(item)}><Pencil size={14} /></button><button className="botao--edicao-inline botao--edicao-inline-perigo" aria-label={`Excluir ${item.descricao}`} title="Excluir definitivamente" onClick={() => excluir(item.id, item.descricao)}><Trash2 size={14} /></button></>}</span>{item.marcacaoPlanejamento && item.marcacaoPlanejamento !== "NENHUMA" && <span className="marcacao-badge">{item.marcacaoPlanejamento === "PISO_HUMANO" ? <HeartHandshake size={12} /> : <Repeat2 size={12} />}{ROTULOS_MARCACAO[item.marcacaoPlanejamento]}</span>}<small>{item.tipo === "RECEITA" ? (item.origemReceita ? ROTULOS_ORIGEM_RECEITA[item.origemReceita] : "Origem não informada") : item.categoria?.nome ?? "Sem categoria"} · {item.vencimento} · {item.status}</small></div></div>
-          <b className={item.tipo === "DESPESA" ? "valor--despesa" : item.tipo === "RECEITA" ? "valor--receita" : ""}>{item.tipo === "DESPESA" ? "-" : item.tipo === "RECEITA" ? "+" : ""}{formatarDinheiro(item.valor)}</b>
-          <span className="lancamento__origem">{origemDo(item)}<small>{statusLegivel(item)}</small>{item.origem !== "MANUAL" && <small>Importado via {item.origem}</small>}</span>
-          <div className="lancamentos__acoes">
+        <ListaLancamentos
+          itens={dados.itens}
+          origemDo={origemDo}
+          aoEditar={aoEditar}
+          aoExcluir={excluir}
+          renderAcoes={(item) => <>
             {item.editavel && item.status === "PENDENTE" && <button className="botao--icone" aria-label={`Liquidar ${item.descricao}`} title="Liquidar" onClick={() => comando(item.id, "liquidar")}><CheckCircle2 size={17} /></button>}
             {item.editavel && item.status === "PENDENTE" && <button className="botao--icone" aria-label={`Cancelar ${item.descricao}`} title="Cancelar lançamento" onClick={() => comando(item.id, "cancelar")}><Ban size={17} /></button>}
             {item.editavel && item.status === "LIQUIDADO" && <button className="botao--icone" aria-label={`Reabrir ${item.descricao}`} title="Reabrir" onClick={() => comando(item.id, "reabrir")}><RotateCcw size={17} /></button>}
             {!item.editavel && revisando !== item.id && <button className="botao--icone" aria-label={`Revisar categoria de ${item.descricao}`} title="Revisar categoria" onClick={() => { setRevisando(item.id); setCategoriaRevisao(item.categoria?.nome ?? ""); }}><Tags size={17} /></button>}
             {!item.editavel && revisando === item.id && <span className="lancamento__revisao"><select aria-label={`Nova categoria de ${item.descricao}`} value={categoriaRevisao} onChange={(evento) => setCategoriaRevisao(evento.target.value)}><option value="">Escolha</option>{CATEGORIAS_LANCAMENTO.map((categoria) => <option value={categoria.nome} key={categoria.nome}>{categoria.nome}</option>)}</select><button className="botao--icone" aria-label={`Salvar categoria de ${item.descricao}`} onClick={() => classificar(item)}><Check size={16} /></button><button className="botao--icone" aria-label={`Fechar revisão de ${item.descricao}`} onClick={() => setRevisando(null)}><X size={16} /></button></span>}
-          </div>
-        </li></Fragment>)}</ul>}
+          </>}
+        />}
       <p className="lancamentos__paginacao">Exibindo {Math.min((pagina + 1) * dados.tamanho, dados.totalDeItens)} de {dados.totalDeItens} lançamentos · página {pagina + 1} de {Math.max(1, Math.ceil(dados.totalDeItens / dados.tamanho))}</p>
       {dados.temMais && <button type="button" className="lancamentos__mais" onClick={() => carregar(pagina + 1, true)}>Carregar mais lançamentos</button>}
       <footer className="lancamentos__resumo"><span>Saldo realizado <b className={Number(dados.saldoRealizado) < 0 ? "valor--despesa" : ""}>{formatarDinheiro(dados.saldoRealizado)}</b></span><span>Saldo previsto <b className={Number(dados.saldoPrevisto) < 0 ? "valor--despesa" : ""}>{formatarDinheiro(dados.saldoPrevisto)}</b></span></footer>

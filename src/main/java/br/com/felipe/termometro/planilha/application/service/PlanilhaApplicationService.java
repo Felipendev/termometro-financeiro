@@ -5,6 +5,7 @@ import br.com.felipe.termometro.lancamentoplanejado.application.repository.Lanca
 import br.com.felipe.termometro.lancamentoplanejado.application.repository.LancamentoImportadoRepository.LancamentoImportado;
 import br.com.felipe.termometro.lancamentoplanejado.application.repository.LancamentoPlanejadoRepository;
 import br.com.felipe.termometro.lancamentoplanejado.application.service.LancamentoPlanejadoApplicationService;
+import br.com.felipe.termometro.lancamentoplanejado.domain.EscopoEdicaoRecorrencia;
 import br.com.felipe.termometro.lancamentoplanejado.domain.LancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.StatusLancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.TipoLancamentoPlanejado;
@@ -143,7 +144,7 @@ public class PlanilhaApplicationService implements PlanilhaService {
                             categoria == null ? null : categoria.grupo(),
                             categoria == null ? null : categoria.natureza(),
                             item.origemReceita() == null ? null : item.origemReceita().name(),
-                            item.marcacaoPlanejamento().name()));
+                            item.marcacaoPlanejamento().name(), item.diaRecorrencia()));
         }
     }
 
@@ -171,7 +172,7 @@ public class PlanilhaApplicationService implements PlanilhaService {
 
     @Override
     @Transactional
-    public LancamentoPlanejado editaLancamento(LancamentoPlanejado alteracoes) {
+    public LancamentoPlanejado editaLancamento(LancamentoPlanejado alteracoes, EscopoEdicaoRecorrencia escopo) {
         LancamentoPlanejado existente = lancamentoPlanejadoRepository.buscaPorId(alteracoes.id())
                 .orElseThrow(() -> new IllegalArgumentException("lançamento não encontrado"));
         if (existente.tipo() == TipoLancamentoPlanejado.TRANSFERENCIA) {
@@ -184,13 +185,15 @@ public class PlanilhaApplicationService implements PlanilhaService {
         if (estavaLiquidado) {
             lancamentoPlanejadoService.reabrir(existente.id());
         }
+        Integer dia = alteracoes.diaRecorrencia() != null ? alteracoes.diaRecorrencia() : existente.diaRecorrencia();
         LancamentoPlanejado atualizado = new LancamentoPlanejado(
                 existente.id(), alteracoes.descricao(), existente.tipo(), alteracoes.valor(),
                 alteracoes.vencimento(), StatusLancamentoPlanejado.PENDENTE,
                 existente.contaOrigemId(), existente.contaDestinoId(), alteracoes.categoria(),
                 existente.cartaoManualId(), existente.transacaoId(),
-                alteracoes.marcacaoPlanejamento(), alteracoes.origemReceita());
-        LancamentoPlanejado salvo = lancamentoPlanejadoService.edita(atualizado);
+                alteracoes.marcacaoPlanejamento(), alteracoes.origemReceita(),
+                existente.serieId(), dia);
+        LancamentoPlanejado salvo = lancamentoPlanejadoService.edita(atualizado, escopo);
         return estavaLiquidado ? lancamentoPlanejadoService.liquidar(salvo.id()) : salvo;
     }
 

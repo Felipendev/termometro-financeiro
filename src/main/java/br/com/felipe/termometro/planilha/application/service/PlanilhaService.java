@@ -3,6 +3,7 @@ package br.com.felipe.termometro.planilha.application.service;
 import br.com.felipe.termometro.planilha.domain.ItemDoDia;
 import br.com.felipe.termometro.planilha.domain.PlanilhaDoMes;
 import br.com.felipe.termometro.planilha.domain.SaldoInicialPlanilha;
+import br.com.felipe.termometro.lancamentoplanejado.domain.EscopoEdicaoRecorrencia;
 import br.com.felipe.termometro.lancamentoplanejado.domain.LancamentoPlanejado;
 import br.com.felipe.termometro.shared.Competencia;
 import br.com.felipe.termometro.shared.Dinheiro;
@@ -33,7 +34,7 @@ public interface PlanilhaService {
 
     LancamentoPlanejado adicionaLancamento(LancamentoPlanejado item);
 
-    LancamentoPlanejado editaLancamento(LancamentoPlanejado item);
+    LancamentoPlanejado editaLancamento(LancamentoPlanejado item, EscopoEdicaoRecorrencia escopo);
 
     void removeLancamento(UUID id);
 }

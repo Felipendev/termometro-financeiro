@@ -8,4 +8,7 @@ import br.com.felipe.termometro.lancamentoplanejado.application.repository.Lanca
  @Transactional public void remove(UUID id){repository.deleteById(id);}
  @Transactional(readOnly=true) public Optional<LancamentoPlanejado> buscaPorId(UUID id){return repository.findById(id).map(LancamentoPlanejadoJpaEntity::paraDominio);}
  @Transactional(readOnly=true) public Optional<java.time.LocalDate> primeiraData(){return repository.findFirstByOrderByVencimentoAsc().map(LancamentoPlanejadoJpaEntity::getVencimento);}
+ @Transactional(readOnly=true) public List<LancamentoPlanejado> buscaPorSerie(UUID serieId){return repository.findBySerieIdOrderByVencimento(serieId).stream().map(LancamentoPlanejadoJpaEntity::paraDominio).toList();}
+ @Transactional(readOnly=true) public List<UUID> buscaSeriesComPendencia(){return repository.buscaSeriesComPendencia();}
+ @Transactional(readOnly=true) public List<LancamentoPlanejado> buscaOrfaosDeRecorrencia(){return repository.buscaOrfaosDeRecorrencia().stream().map(LancamentoPlanejadoJpaEntity::paraDominio).toList();}
 }

@@ -3,7 +3,6 @@ import { competenciaAtual, formatarCompetencia } from "../format";
 import { RendaSection } from "../settings/RendaSection";
 import { VerbaMensalSection } from "../settings/VerbaMensalSection";
 import { CustoFixoSection } from "../settings/CustoFixoSection";
-import { PisoHumanoSection } from "../settings/PisoHumanoSection";
 import { DividasSection } from "../settings/DividasSection";
 import { ContribuicaoSection } from "../settings/ContribuicaoSection";
 
@@ -55,7 +54,6 @@ export function Planejamento() {
         <div className="config__grid">
         <DividasSection competencia={competencia} />
         <CustoFixoSection />
-        <PisoHumanoSection />
         </div>
       </div>
 

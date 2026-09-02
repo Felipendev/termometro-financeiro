@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import type { CSSProperties } from "react";
-import { ArrowLeftRight, ArrowRight, HeartHandshake, Minus, Plus, RefreshCw, Repeat2, Sparkles, Upload } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Minus, Plus, RefreshCw, Repeat2, Sparkles, Upload } from "lucide-react";
 import { buscaFaturasCartao, buscaTodosLancamentos } from "../api";
 import { formatarDespesa, formatarDinheiro, somarDinheiro } from "../format";
 import type { DashboardResponse, FaturaCartaoResponse, LancamentoPlanejadoResponse } from "../types";
 import { combinaCategorias } from "../resumoCategorias";
 import { IconeCategoria } from "./IconeCategoria";
 import { GraficoComparativo } from "./GraficoComparativo";
+import { GraficoRosca, type SegmentoRosca } from "./GraficoRosca";
 import { LogoCartao } from "./LogoCartao";
 
 const CORES = ["#748af1", "#f19479", "#4fa879", "#d4ad52"];
@@ -116,17 +116,12 @@ export function PainelVisaoGeral({
     return () => { ativo = false; };
   }, [dashboard.competencia]);
 
-  const fatias = maiorGastos.reduce<{ itens: string[]; acumulado: number }>((resultado, { total }, indice) => {
+  const segmentosCategorias = maiorGastos.reduce<{ segmentos: SegmentoRosca[]; acumulado: number }>((resultado, { nome, total }, indice) => {
     const inicio = resultado.acumulado;
     const percentual = (paraNumero(total) / totalParaGrafico) * 100;
-    return {
-      itens: [...resultado.itens, `${CORES[indice]} ${inicio.toFixed(2)}% ${(inicio + percentual).toFixed(2)}%`],
-      acumulado: inicio + percentual,
-    };
-  }, { itens: [], acumulado: 0 }).itens;
-  const graficoStyle = {
-    "--fatias": fatias.length > 0 ? fatias.join(", ") : "#e8ebe7 0 100%",
-  } as CSSProperties;
+    const fim = inicio + percentual;
+    return { segmentos: [...resultado.segmentos, { nome, inicio, fim, percentual, cor: CORES[indice] }], acumulado: fim };
+  }, { segmentos: [], acumulado: 0 }).segmentos;
 
   return (
     <>
@@ -173,10 +168,12 @@ export function PainelVisaoGeral({
                   </li>
                 ))}
               </ul>
-              <div className="grafico-rosca" role="img" style={graficoStyle} aria-label="Distribuição dos gastos por categoria">
-                <span>{maiorGastos.length}</span>
-                <small>categorias</small>
-              </div>
+              <GraficoRosca
+                segmentos={segmentosCategorias}
+                tamanho={138}
+                furoRaio={25}
+                centro={<><span>{maiorGastos.length}</span><small>categorias</small></>}
+              />
             </div>
           )}
           <button type="button" className="link-painel" onClick={onVerRelatorios}>Ver relatório completo <ArrowRight size={15} /></button>
@@ -213,7 +210,6 @@ export function PainelVisaoGeral({
           <h2>Compromissos essenciais</h2>
           <dl className="totais-sustentacao">
             <button type="button" onClick={() => onVerSustentacao("CUSTO_FIXO")}><dt><Repeat2 size={15} /> Custo fixo</dt><dd>{formatarDinheiro(dashboard.viabilidade.custoFixoTotal)}</dd><ArrowRight size={15} aria-hidden="true" /></button>
-            <button type="button" onClick={() => onVerSustentacao("PISO_HUMANO")}><dt><HeartHandshake size={15} /> Piso humano</dt><dd>{formatarDinheiro(dashboard.viabilidade.pisoVariavelTotal)}</dd><ArrowRight size={15} aria-hidden="true" /></button>
           </dl>
           <span className="painel--limite__acao">Definidos diretamente nos lançamentos</span>
         </article>

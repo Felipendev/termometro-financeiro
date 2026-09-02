@@ -14,7 +14,8 @@ public record LancamentoDaPlanilhaResponse(
         String grupoCategoria,
         String naturezaCategoria,
         String origemReceita,
-        String marcacaoPlanejamento) {
+        String marcacaoPlanejamento,
+        Integer diaRecorrencia) {
 
     public static LancamentoDaPlanilhaResponse de(ItemDoDia item) {
         return new LancamentoDaPlanilhaResponse(
@@ -22,6 +23,6 @@ public record LancamentoDaPlanilhaResponse(
                 item.valor().paraJson(), item.tipo().name(), item.origem(),
                 item.usoDeCredito() == null ? null : item.usoDeCredito().name(), item.editavel(),
                 item.categoria(), item.grupoCategoria(), item.naturezaCategoria(), item.origemReceita(),
-                item.marcacaoPlanejamento());
+                item.marcacaoPlanejamento(), item.diaRecorrencia());
     }
 }

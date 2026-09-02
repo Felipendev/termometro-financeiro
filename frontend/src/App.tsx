@@ -135,7 +135,7 @@ function App() {
         </div>
       </header>
 
-      <div className="app">
+      <div className={aba === "planilha" ? "app app--planilha" : "app"}>
         <header className="app__cabecalho">
           <div><p className="eyebrow">{TITULOS[aba].apoio}</p><h1>{TITULOS[aba].titulo}</h1></div>
           {exibeCompetencia && (

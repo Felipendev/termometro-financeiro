@@ -23,14 +23,16 @@ public record LancamentoPlanejadoResponse(
         String contaOuCartao,
         boolean editavel,
         String origem,
-        OrigemReceita origemReceita) {
+        OrigemReceita origemReceita,
+        UUID serieId,
+        Integer diaRecorrencia) {
 
     public LancamentoPlanejadoResponse(LancamentoPlanejado lancamento) {
         this(lancamento.id(), lancamento.descricao(), lancamento.tipo().name(), lancamento.valor(),
                 lancamento.vencimento(), lancamento.status().name(), lancamento.contaOrigemId(),
                 lancamento.contaDestinoId(), lancamento.categoria(), lancamento.cartaoManualId(),
                 lancamento.transacaoId(), lancamento.marcacaoPlanejamento().name(), null, true,
-                "MANUAL", lancamento.origemReceita());
+                "MANUAL", lancamento.origemReceita(), lancamento.serieId(), lancamento.diaRecorrencia());
     }
 
     public LancamentoPlanejadoResponse(LancamentoPlanejado lancamento, String contaOuCartao,
@@ -39,6 +41,7 @@ public record LancamentoPlanejadoResponse(
                 lancamento.vencimento(), lancamento.status().name(), lancamento.contaOrigemId(),
                 lancamento.contaDestinoId(), lancamento.categoria(), lancamento.cartaoManualId(),
                 lancamento.transacaoId(), lancamento.marcacaoPlanejamento().name(), contaOuCartao,
-                editavel, origem, lancamento.origemReceita());
+                editavel, origem, lancamento.origemReceita(), lancamento.serieId(),
+                lancamento.diaRecorrencia());
     }
 }

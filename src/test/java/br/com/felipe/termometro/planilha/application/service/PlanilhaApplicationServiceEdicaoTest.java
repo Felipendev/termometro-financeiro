@@ -2,6 +2,7 @@ package br.com.felipe.termometro.planilha.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -11,6 +12,7 @@ import br.com.felipe.termometro.lancamentoplanejado.application.repository.Lanca
 import br.com.felipe.termometro.lancamentoplanejado.application.repository.LancamentoPlanejadoRepository;
 import br.com.felipe.termometro.lancamentoplanejado.application.service.LancamentoPlanejadoApplicationService;
 import br.com.felipe.termometro.lancamentoplanejado.domain.CategoriaDoLancamento;
+import br.com.felipe.termometro.lancamentoplanejado.domain.EscopoEdicaoRecorrencia;
 import br.com.felipe.termometro.lancamentoplanejado.domain.LancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.StatusLancamentoPlanejado;
 import br.com.felipe.termometro.lancamentoplanejado.domain.TipoLancamentoPlanejado;
@@ -43,7 +45,7 @@ class PlanilhaApplicationServiceEdicaoTest {
                 LocalDate.of(2026, 9, 4), StatusLancamentoPlanejado.PENDENTE,
                 null, null, categoria, null, null);
         when(planejados.buscaPorId(id)).thenReturn(Optional.of(existente));
-        when(lancamentos.edita(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(lancamentos.edita(any(), any())).thenAnswer(invocacao -> invocacao.getArgument(0));
         when(lancamentos.liquidar(id)).thenReturn(alteracoes.liquidar());
 
         PlanilhaApplicationService service = new PlanilhaApplicationService(
@@ -52,12 +54,12 @@ class PlanilhaApplicationServiceEdicaoTest {
                 mock(SaldoInicialRepository.class), lancamentos,
                 Clock.fixed(Instant.parse("2026-09-01T12:00:00Z"), ZoneOffset.UTC));
 
-        service.editaLancamento(alteracoes);
+        service.editaLancamento(alteracoes, EscopoEdicaoRecorrencia.ESTA);
 
         var ordem = inOrder(lancamentos);
         ordem.verify(lancamentos).reabrir(id);
         ArgumentCaptor<LancamentoPlanejado> salvo = ArgumentCaptor.forClass(LancamentoPlanejado.class);
-        ordem.verify(lancamentos).edita(salvo.capture());
+        ordem.verify(lancamentos).edita(salvo.capture(), eq(EscopoEdicaoRecorrencia.ESTA));
         ordem.verify(lancamentos).liquidar(id);
         assertThat(salvo.getValue().descricao()).isEqualTo("Mercado correto");
         assertThat(salvo.getValue().valor()).isEqualTo(Dinheiro.de("125.90"));

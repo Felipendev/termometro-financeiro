@@ -44,10 +44,19 @@ public class CatalogoInfraRepository implements CatalogoRepository {
                 .toList();
     }
 
+    /**
+     * Renda declarada vale "a partir de" até ser redeclarada: sem esse fallback pra declaração
+     * anterior, navegar pra um mês ainda não declarado (o próximo, tipicamente) devolvia 404 e
+     * derrubava a visão geral inteira, mesmo com a renda do mês anterior valendo.
+     */
     @Override
     @Transactional(readOnly = true)
     public Optional<Renda> buscaRenda(Competencia competencia) {
-        return rendaRepository.findByCompetencia(competencia.primeiroDia())
+        return rendaRepository
+                .findByCompetenciaLessThanEqualOrderByCompetenciaDesc(
+                        competencia.primeiroDia(), PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
                 .map(RendaJpaEntity::paraDominio);
     }
 
