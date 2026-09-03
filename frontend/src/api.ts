@@ -21,6 +21,38 @@ const BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
   "http://localhost:8080/termometro/api";
 
+// ------------------------------------------------------------------ sessão (login único, ver auth.ts)
+
+const CHAVE_TOKEN = "termometro.auth.token";
+const CHAVE_EXPIRA_EM = "termometro.auth.expiraEm";
+
+export function getToken(): string | null {
+  return localStorage.getItem(CHAVE_TOKEN);
+}
+
+export function salvaSessao(token: string, expiraEm: string): void {
+  localStorage.setItem(CHAVE_TOKEN, token);
+  localStorage.setItem(CHAVE_EXPIRA_EM, expiraEm);
+}
+
+export function limpaSessao(): void {
+  localStorage.removeItem(CHAVE_TOKEN);
+  localStorage.removeItem(CHAVE_EXPIRA_EM);
+}
+
+export function sessaoValida(): boolean {
+  const token = localStorage.getItem(CHAVE_TOKEN);
+  const expiraEm = localStorage.getItem(CHAVE_EXPIRA_EM);
+  if (!token || !expiraEm) return false;
+  return new Date(expiraEm).getTime() > Date.now();
+}
+
+/** Registrado pelo `App.tsx` — chamado sempre que uma chamada de API voltar 401 (token ausente/expirado). */
+let aoNaoAutenticado: (() => void) | null = null;
+export function registraCallbackNaoAutenticado(callback: () => void): void {
+  aoNaoAutenticado = callback;
+}
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -69,7 +101,11 @@ interface ProblemDetail {
  * 204 No Content (os DELETE do catálogo).
  */
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const resposta = await fetch(`${BASE_URL}${path}`, init);
+  const token = getToken();
+  const cabecalhos = new Headers(init?.headers);
+  if (token) cabecalhos.set("Authorization", `Bearer ${token}`);
+
+  const resposta = await fetch(`${BASE_URL}${path}`, { ...init, headers: cabecalhos });
 
   if (!resposta.ok) {
     let mensagem = `Falha na requisição (HTTP ${resposta.status}).`;
@@ -78,6 +114,12 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
       mensagem = problema.detail ?? problema.message ?? problema.title ?? mensagem;
     } catch {
       // corpo não é JSON — mantém a mensagem genérica
+    }
+    // /v1/auth/login nunca dispara o gate de sessão: um 401 ali é "senha errada", tratado inline
+    // pela tela de login — não uma sessão que expirou no meio do uso.
+    if (resposta.status === 401 && path !== "/v1/auth/login") {
+      limpaSessao();
+      aoNaoAutenticado?.();
     }
     throw new ApiError(mensagem, resposta.status);
   }

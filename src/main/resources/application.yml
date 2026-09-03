@@ -35,6 +35,14 @@ spring:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  security:
+    # Login único (app pessoal, sem cadastro) — ver auth/ e config/SecurityConfig. Defaults abaixo
+    # só valem local/dev; em produção (Railway) as env vars reais são obrigatórias, mesmo espírito
+    # do DB_PASSWORD. Hash é BCrypt de "dev123", gerado só pra dev local.
+    username: ${AUTH_USERNAME:felipe}
+    password-hash: ${AUTH_PASSWORD_HASH:$2a$10$toPzhkLArY0CA2a/viVTP.b/Kq.XDeIWRMnXnSXTJF/ndClL1GIxy}
+    jwt-secret: ${JWT_SECRET:ZGV2LXNvbWVudGUtc2VncmVkby1sb2NhbC1uYW8tdXNhci1lbS1wcm9kdWNhby0h}
+    jwt-expiracao-dias: ${JWT_EXPIRACAO_DIAS:7}
 
 # ---------------------------------------------------------------------------
 # Bot do Telegram (RN-22 / M6 — notificação matinal).

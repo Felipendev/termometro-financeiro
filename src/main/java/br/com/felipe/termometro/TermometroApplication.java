@@ -3,10 +3,14 @@ package br.com.felipe.termometro;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication
+// UserDetailsServiceAutoConfiguration excluída: login é via auth/JwtAuthenticationFilter (JWT
+// validado à mão, sem AuthenticationManager/UserDetailsService) — sem a exclusão, o Boot cria um
+// usuário em memória com senha aleatória que nunca é usado, só suja o log de start.
+@SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 @EnableScheduling
 @EnableAsync
 public class TermometroApplication {

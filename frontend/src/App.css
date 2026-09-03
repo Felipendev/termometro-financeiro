@@ -411,3 +411,15 @@ table.planilha__tabela { border-collapse: separate; border-spacing: 0; font-size
 @media (max-width: 720px) {
   .app--planilha { padding: 14px 12px 10px; }
 }
+
+/* ---------------------------------------------------------------- Tela de login */
+.tela-login {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: var(--cor-fundo);
+}
+.tela-login__cartao { width: 100%; max-width: 340px; margin: 0; }
+.tela-login__marca { justify-content: center; margin-bottom: 18px; font-size: 1.25rem; }
+.tela-login h1 { margin: 0 0 16px; font-size: 1.2rem; text-align: center; }

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { BarChart3, ChevronLeft, ChevronRight, LayoutDashboard, ListChecks, Rows3, Settings, X } from "lucide-react";
-import { ApiError, buscaDashboardInicio, postNaoGasto, postTriagem, verificaCompatibilidade } from "./api";
+import { BarChart3, ChevronLeft, ChevronRight, LayoutDashboard, ListChecks, LogOut, Rows3, Settings, X } from "lucide-react";
+import { ApiError, buscaDashboardInicio, postNaoGasto, postTriagem, registraCallbackNaoAutenticado, verificaCompatibilidade } from "./api";
+import { logout, tokenValido } from "./auth";
 import type { DashboardInicioResponse, LancamentoPlanejadoResponse } from "./types";
 import { competenciaAtual, formatarCompetencia } from "./format";
 import { NAVEGACAO_PRINCIPAL, type AbaPrincipal } from "./navigation";
 import { Skeleton } from "./components/Skeleton";
+import { TelaLogin } from "./components/TelaLogin";
 import { Planilha } from "./pages/Planilha";
 import { PainelVisaoGeral } from "./components/PainelVisaoGeral";
 import { FormularioLancamentoRapido, type TipoRapido } from "./components/FormularioLancamentoRapido";
@@ -40,6 +42,7 @@ function deslocarCompetencia(competencia: string, deslocamento: number) {
 }
 
 function App() {
+  const [autenticado, setAutenticado] = useState(tokenValido());
   const [aba, setAba] = useState<AbaPrincipal>("dashboard");
   const [competencia, setCompetencia] = useState(competenciaAtual());
   const [estado, setEstado] = useState<Estado>({ tipo: "carregando" });
@@ -65,10 +68,15 @@ function App() {
   }, []);
 
   useEffect(() => {
+    registraCallbackNaoAutenticado(() => setAutenticado(false));
+  }, []);
+
+  useEffect(() => {
+    if (!autenticado) return;
     const controlador = new AbortController();
     carregar(competencia, controlador.signal);
     return () => controlador.abort();
-  }, [competencia, carregar]);
+  }, [autenticado, competencia, carregar]);
 
   async function rodarNaoGasto() {
     setRodando("nao-gasto");
@@ -112,6 +120,10 @@ function App() {
 
   const exibeCompetencia = aba !== "planilha";
 
+  if (!autenticado) {
+    return <TelaLogin aoEntrar={() => setAutenticado(true)} />;
+  }
+
   return (
     <div className="shell">
       <header className="topbar">
@@ -131,6 +143,9 @@ function App() {
           </nav>
           <button type="button" className="botao--icone topbar__configuracoes" onClick={() => setConfiguracoesAbertas(true)} aria-label="Configurações">
             <Settings size={17} aria-hidden="true" />
+          </button>
+          <button type="button" className="botao--icone" onClick={() => { logout(); setAutenticado(false); }} aria-label="Sair">
+            <LogOut size={17} aria-hidden="true" />
           </button>
         </div>
       </header>
