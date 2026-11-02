@@ -1,0 +1,71 @@
+{
+  "feature": "insights-gastos",
+  "status": "planned",
+  "method": "TDD",
+  "checklist": [
+    "Escrever o teste vermelho antes de cada implementação",
+    "Não criar metas ou valores sem referência retornada pelo backend",
+    "Reutilizar os itens do comparativo como fonte do detalhamento",
+    "Revisar acessibilidade, desktop e mobile",
+    "Executar npm test, npm run build e mvn test ao concluir"
+  ],
+  "tasks": [
+    {
+      "id": "T01",
+      "layer": 1,
+      "status": "pending",
+      "title": "Modelar e testar o cálculo determinístico dos insights",
+      "dependsOn": [],
+      "testsFirst": ["frontend/src/components/insightsGastos.test.ts"],
+      "acceptance": [
+        "calcula o valor em reais a reduzir contra ideal ou bom",
+        "classifica dentro do ideal, atenção, acima do limite e prioritário",
+        "ignora grupos sem referências calibradas",
+        "distingue dados reais de estimativa por catálogo",
+        "ordena oportunidades por maior impacto e limita a três"
+      ]
+    },
+    {
+      "id": "T02",
+      "layer": 1,
+      "status": "pending",
+      "title": "Criar o bloco acessível de dicas abaixo do gráfico",
+      "dependsOn": ["T01"],
+      "testsFirst": ["frontend/src/components/GraficoComparativo.test.tsx"],
+      "acceptance": [
+        "renderiza as mensagens e valores explicáveis em reais",
+        "mostra no máximo três oportunidades de economia",
+        "não renderiza a seção sem insights úteis",
+        "mostra a origem estimada quando a fonte for catálogo",
+        "tem rótulos acessíveis e foco visível"
+      ]
+    },
+    {
+      "id": "T03",
+      "layer": 1,
+      "status": "pending",
+      "title": "Conectar cada dica ao detalhamento de gastos do grupo",
+      "dependsOn": ["T02"],
+      "testsFirst": ["frontend/src/components/GraficoComparativo.test.tsx"],
+      "acceptance": [
+        "a ação da dica abre o detalhamento existente do grupo correto",
+        "usa os mesmos itens e total exibidos no gráfico",
+        "não dispara nova chamada de API nem duplica lançamento"
+      ]
+    },
+    {
+      "id": "T04",
+      "layer": 3,
+      "status": "pending",
+      "title": "Validar regressão, responsividade e coerência dos dados",
+      "dependsOn": ["T03"],
+      "testsFirst": [],
+      "acceptance": [
+        "npm test e npm run build passam",
+        "mvn test passa sem regressões",
+        "verificação visual desktop e mobile confirma leitura clara abaixo do gráfico",
+        "tooltips, eixo e detalhamento atuais do gráfico continuam operantes"
+      ]
+    }
+  ]
+}
